@@ -1,3 +1,39 @@
+<!-- 
+Unreadable mess never using three.js again
+
+Learning how to use this has teached me that you should just use a Engine to make 3D html games
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -292,7 +328,7 @@ input[type=number] { -moz-appearance:textfield; }
       <div class="outliner">
         <div class="out-header">
           <svg viewBox="0 0 14 14" width="12" height="12"><path d="M2 4 L7 2 L12 4 L12 10 L7 12 L2 10 Z" stroke="currentColor" stroke-width="1" fill="none"/></svg>
-          <span>Outliner</span>
+          <span>Objects/Outliner</span>
           <span style="margin-left:auto; color:#a1a1a1; font-size:9px;">▾</span>
         </div>
         <div id="tree"></div>
@@ -389,7 +425,7 @@ input[type=number] { -moz-appearance:textfield; }
 
 <div class="modal" id="help">
   <div class="help-card">
-    <h2>Blender 3.x — Web Edition</h2>
+    <h2>Blender 3.x Website</h2>
     <p style="color:#a1a1a1; margin-bottom:12px;">A faithful recreation of the Blender 3.x interface with core 3D modeling features.</p>
     <ul>
       <li><b>Shift + A</b> Add objects, cameras, or lights</li>
@@ -416,7 +452,7 @@ input[type=number] { -moz-appearance:textfield; }
   </div>
 </div>
 
-<!-- Added fflate to importmap for FBXLoader support -->
+<!-- Import Loaders & Modules-->
 <script type="importmap">
 {
   "imports": {
@@ -654,7 +690,7 @@ function addCam() {
   const h = new THREE.CameraHelper(c);
   h.material.color.set(0x000000);
   h.name = '__helper__';
-  h.raycast = () => {}; // Disable raycasting on helper
+  h.raycast = () => {};
   scene.add(h);
   c.userData.helper = h;
   
@@ -681,7 +717,7 @@ function addLight(type) {
   S.objs.push(light);
   
   helper.name = '__helper__';
-  helper.raycast = () => {}; // Disable raycasting on helper
+  helper.raycast = () => {};
   scene.add(helper);
   light.userData.helper = helper;
   
@@ -741,7 +777,7 @@ function selectObject(o, add = false) {
       const out = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color: 0xff8800, depthTest: false, transparent: true }));
       out.name = '__outline__';
       out.renderOrder = 1;
-      out.raycast = () => {}; // Disable raycasting on outline
+      out.raycast = () => {};
       x.add(out);
     }
   });
@@ -1302,7 +1338,6 @@ canvas.addEventListener('pointerdown', e => {
     const its = raycaster.intersectObjects(S.objs, true);
     if (its.length > 0) {
       if (e.altKey) {
-        // Alt+Click to cycle through intersected objects and their parent groups
         const cycleList = [];
         const addObjToList = (obj) => {
           if (obj && !cycleList.includes(obj) && obj !== scene && 
@@ -1314,7 +1349,6 @@ canvas.addEventListener('pointerdown', e => {
 
         its.forEach(it => {
           let obj = it.object;
-          // If it's a light helper, get the light itself
           if (obj.light) obj = obj.light;
           
           addObjToList(obj);
@@ -2493,7 +2527,6 @@ function animate() {
   requestAnimationFrame(animate);
   orbit.update();
   
-  // Update bone helpers in pose mode
   if (S.poseMode && S.skinnedMesh) {
     S.skinnedMesh.updateMatrixWorld(true);
     S.boneHelpers.forEach(h => {

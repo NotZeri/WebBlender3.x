@@ -37,6 +37,7 @@ Learning how to use this has teached me that you should just use a Engine to mak
 <!DOCTYPE html>
 <html>
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.0.3/dist/discord-sdk.min.js"></script>
 <meta charset="UTF-8">
 <title>WebBlender 3.X</title>
 <style>
@@ -2551,5 +2552,18 @@ saveHistory();
 
 setTimeout(() => toast('Welcome to Blender Web! Drag & Drop .obj/.gltf/.fbx to import.'), 500);
 </script>
+  
+<script>
+    // Wait for the page to load completely
+    window.onload = async () => {
+        // Check if it's running inside Discord
+        if (typeof DiscordSDK !== 'undefined') {
+            const discordSdk = new DiscordSDK("1542418594527453224"); // Your Bot's Application ID
+            await discordSdk.ready();
+            console.log("Discord Activity Loaded Successfully!");
+        }
+    };
+</script>
+  
 </body>
 </html>

@@ -2,6 +2,30 @@
 Unreadable mess never using three.js again
 
 Learning how to use this has teached me that you should just use a Engine to make 3D html games
+
+
+Discord SDK:
+
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.0.3/dist/discord-sdk.min.js"></script>
+</head>
+
+....
+
+<script>
+    // Wait for the page to load completely
+    window.onload = async () => {
+        // Check if it's running inside Discord
+        if (typeof DiscordSDK !== 'undefined') {
+            const discordSdk = new DiscordSDK("1542418594527453224"); // Your Bot's Application ID
+            await discordSdk.ready();
+            console.log("Discord Activity Loaded Successfully!");
+        }
+    };
+</script>
+
+</body>
+
 -->
 
 
@@ -39,7 +63,7 @@ Learning how to use this has teached me that you should just use a Engine to mak
 <head>
 <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.0.3/dist/discord-sdk.min.js"></script>
 <meta charset="UTF-8">
-<title>WebBlender 3.X</title>
+<title>Blender 3.x Web</title>
 <style>
 html, body { margin:0; padding:0; height:100%; background:#1d1d1d; color:#e6e6e6; font-family:'DejaVu Sans', 'Segoe UI', Arial, sans-serif; font-size:11px; overflow:hidden; user-select:none; }
 div, button, input, select { box-sizing:border-box; font-family:inherit; font-size:11px; }
@@ -170,8 +194,9 @@ div, button, input, select { box-sizing:border-box; font-family:inherit; font-si
 .tline-btn:hover { background:#404040; color:#e6e6e6; }
 .tline-btn svg { width:14px; height:14px; fill:currentColor; }
 
-.tline-track { flex:1; height:20px; background:#1d1d1d; border:1px solid #1a1a1a; position:relative; border-radius:2px; overflow:hidden; }
-.tline-cursor { position:absolute; top:0; bottom:0; width:2px; background:#e6e6e6; pointer-events:none; }
+.tline-track { flex:1; height:20px; background:#1d1d1d; border:1px solid #1a1a1a; position:relative; border-radius:2px; overflow:hidden; cursor:pointer; }
+.tline-cursor { position:absolute; top:0; bottom:0; width:2px; background:#e6e6e6; pointer-events:none; z-index:3; }
+.tline-kf { position:absolute; top:50%; width:8px; height:8px; background:#e8c547; transform:translate(-50%, -50%) rotate(45deg); pointer-events:none; z-index:2; box-shadow: 0 0 2px rgba(0,0,0,0.5); }
 
 .status-bar { height:22px; background:#313336; border-top:1px solid #1a1a1a; display:flex; align-items:center; padding:0 8px; gap:16px; color:#a1a1a1; font-size:10px; flex-shrink:0; }
 
@@ -377,8 +402,11 @@ input[type=number] { -moz-appearance:textfield; }
 <div class="timeline">
   <div class="tline-btn" id="play-btn" title="Play"><svg viewBox="0 0 24 24"><path d="M6 4 L20 12 L6 20 Z"/></svg></div>
   <div class="tline-btn" id="stop-btn" title="Stop"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="14" height="16"/></svg></div>
-  <input type="text" class="pinput" style="width:50px; text-align:center;" value="1">
-  <div class="tline-track"><div class="tline-cursor" style="left: 0.4%;"></div></div>
+  <div class="tline-btn" id="key-btn" title="Insert Keyframe (I)"><svg viewBox="0 0 24 24"><path d="M12 2 L14 8 L20 8 L15 12 L17 18 L12 14 L7 18 L9 12 L4 8 L10 8 Z" fill="#ff8800"/></svg></div>
+  <input type="number" class="pinput" style="width:50px; text-align:center;" id="frame-input" value="1">
+  <div class="tline-track" id="tline-track">
+    <div class="tline-cursor" id="tline-cursor" style="left: 0.4%;"></div>
+  </div>
   <span style="color:#a1a1a1;">250</span>
 </div>
 
@@ -413,10 +441,19 @@ input[type=number] { -moz-appearance:textfield; }
         <input type="checkbox" id="set-offset" checked> Paste at Original Position
       </label>
     </div>
-    <div style="margin-bottom:16px;">
+    <div style="margin-bottom:12px;">
       <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
         <input type="checkbox" id="set-mirror"> Enable Mirror Paint
       </label>
+    </div>
+    <div style="margin-bottom:16px; border-top:1px solid #444448; padding-top:12px;">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:8px;">
+        <input type="checkbox" id="set-onion"> Enable Onion Skin
+      </label>
+      <div style="display:flex; align-items:center; gap:8px; padding-left:24px;">
+        <span>Skin Count:</span>
+        <input type="number" id="set-onion-count" value="3" min="1" max="10" style="width:40px; background:#1d1d1d; color:#e6e6e6; border:1px solid #444448; padding:2px;">
+      </div>
     </div>
     <div class="m-actions">
       <button class="btn primary" onclick="document.getElementById('set-modal').classList.remove('show')">Close</button>
@@ -426,13 +463,15 @@ input[type=number] { -moz-appearance:textfield; }
 
 <div class="modal" id="help">
   <div class="help-card">
-    <h2>Blender 3.x Website</h2>
-    <p style="color:#a1a1a1; margin-bottom:12px;">A shitty recreation of the Blender 3.x interface with core 3D modeling features. Love you and hate you Three.js</p>
+    <h2>WebBlender 3.x</h2>
+    <p style="color:#a1a1a1; margin-bottom:12px;">A shitty but accurate recreation of the Blender 3.x interface with core 3D modeling features.</p>
     <ul>
       <li><b>Shift + A</b> Add objects, cameras, or lights</li>
       <li><b>Alt + Click</b> Cycles through overlapping parts and their parent groups</li>
       <li><b>Right-Click > Separate</b> Splits a multi-material object into separate parts</li>
       <li><b>Pose Mode</b> Select a rigged mesh to pose its bones (green dots)</li>
+      <li><b>I</b> Insert Keyframe for selected object/bone at current frame</li>
+      <li><b>Spacebar</b> Play/Pause Animation</li>
       <li><b>Shift + Click</b> Select multiple objects at once</li>
       <li><b>Ctrl + Z / X</b> Undo / Redo</li>
       <li><b>Ctrl + G</b> Group selected objects</li>
@@ -453,7 +492,6 @@ input[type=number] { -moz-appearance:textfield; }
   </div>
 </div>
 
-<!-- Import Loaders & Modules-->
 <script type="importmap">
 {
   "imports": {
@@ -469,6 +507,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
@@ -483,8 +522,17 @@ const S = {
   propTab: 'object', clip: [], worldColor: '#333333',
   dragStart: null, painting: false, paintColor: '#ff0000', brushSize: 20,
   actMatIndex: 0,
-  settings: { pasteOffset: true, mirrorPaint: false }
+  mixers: [],
+  animData: {},
+  isPlaying: false,
+  currentFrame: 0,
+  totalFrames: 250,
+  fps: 30,
+  ghostMeshes: [],
+  settings: { pasteOffset: true, mirrorPaint: false, onionSkin: false, onionCount: 3 }
 };
+
+const clock = new THREE.Clock();
 
 let history = [];
 let hIndex = -1;
@@ -691,7 +739,7 @@ function addCam() {
   const h = new THREE.CameraHelper(c);
   h.material.color.set(0x000000);
   h.name = '__helper__';
-  h.raycast = () => {};
+  h.raycast = () => {}; 
   scene.add(h);
   c.userData.helper = h;
   
@@ -718,7 +766,7 @@ function addLight(type) {
   S.objs.push(light);
   
   helper.name = '__helper__';
-  helper.raycast = () => {};
+  helper.raycast = () => {}; 
   scene.add(helper);
   light.userData.helper = helper;
   
@@ -778,7 +826,7 @@ function selectObject(o, add = false) {
       const out = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color: 0xff8800, depthTest: false, transparent: true }));
       out.name = '__outline__';
       out.renderOrder = 1;
-      out.raycast = () => {};
+      out.raycast = () => {}; 
       x.add(out);
     }
   });
@@ -793,6 +841,8 @@ function selectObject(o, add = false) {
   
   refreshTree();
   refreshProps();
+  updateTimelineKeyframes();
+  updateOnionSkin();
 }
 
 function groupSel() {
@@ -936,6 +986,13 @@ function delSel() {
     if (o.userData.helper) scene.remove(o.userData.helper);
     if (o.parent) o.parent.remove(o);
     
+    if (o.userData.mixer) {
+      S.mixers = S.mixers.filter(m => m !== o.userData.mixer);
+    }
+    if (S.animData[o.uuid]) {
+      delete S.animData[o.uuid];
+    }
+    
     const rm = (arr, t) => {
       let i = arr.indexOf(t);
       if (i > -1) { arr.splice(i, 1); return true; }
@@ -953,18 +1010,18 @@ function delSel() {
   refreshProps();
   updateStats();
   saveHistory();
+  updateTimelineKeyframes();
+  updateOnionSkin();
 }
 
+// --- FIXED CLONING LOGIC FOR GROUPS AND MESHES ---
 function copyObj() {
   if (S.selObjs.length === 0) { toast('Nothing to copy'); return; }
-  S.clip = S.selObjs.map(o => ({
-    geom: o.geometry ? o.geometry.clone() : null,
-    mat: o.material ? (Array.isArray(o.material) ? o.material.map(m => m.clone()) : o.material.clone()) : null,
-    pos: o.position.clone(),
-    rot: o.rotation.clone(),
-    scale: o.scale.clone(),
-    name: o.name
-  }));
+  S.clip = S.selObjs.map(o => {
+    // SkeletonUtils.clone properly clones groups, meshes, materials, and skeletons
+    const clone = SkeletonUtils.clone(o);
+    return { clone, name: o.name };
+  });
   toast('Copied ' + S.clip.length + ' objects');
 }
 
@@ -972,12 +1029,13 @@ function pasteObj() {
   if (S.clip.length === 0) { toast('Clipboard is empty'); return; }
   const newObjs = [];
   S.clip.forEach(c => {
-    const n = new THREE.Mesh(c.geom, c.mat);
+    // Clone the clone so we can paste multiple times
+    const n = SkeletonUtils.clone(c.clone);
     n.name = genName(c.name.split('.')[0]);
-    n.position.copy(c.pos);
+    
+    // If "Paste at Original Position" is unchecked, it offsets it
     if (!S.settings.pasteOffset) n.position.add(new THREE.Vector3(1, 1, 0));
-    n.rotation.copy(c.rot);
-    n.scale.copy(c.scale);
+    
     scene.add(n);
     S.objs.push(n);
     newObjs.push(n);
@@ -1375,9 +1433,8 @@ canvas.addEventListener('pointerdown', e => {
           }
         }
       } else {
-        // Normal click: top-most parent in S.objs
         let hit = its[0].object;
-        if (hit.light) hit = hit.light; // Handle clicking light helpers
+        if (hit.light) hit = hit.light; 
         
         let topObj = hit;
         while (topObj.parent && !S.objs.includes(topObj)) {
@@ -1454,6 +1511,8 @@ document.addEventListener('keydown', e => {
   if (e.ctrlKey && k === 'z') { e.preventDefault(); undo(); return; }
   if (e.ctrlKey && k === 'x') { e.preventDefault(); redo(); return; }
   if (e.key === 'F12') { e.preventDefault(); openRenderModal(); return; }
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); return; } 
+  if (k === 'i') { e.preventDefault(); insertKeyframe(); return; } 
   
   switch(k) {
     case 'g': setTool('move'); break;
@@ -1675,6 +1734,17 @@ function handleFileDrop(file) {
             c.castShadow = true; c.receiveShadow = true;
           }
         });
+        
+        if (gltf.animations && gltf.animations.length > 0) {
+          const mixer = new THREE.AnimationMixer(obj);
+          S.mixers.push(mixer);
+          obj.userData.mixer = mixer;
+          obj.userData.animations = gltf.animations;
+          const action = mixer.clipAction(gltf.animations[0]);
+          action.play();
+          action.paused = true; 
+        }
+        
         scene.add(obj);
         S.objs.push(obj);
         selectObject(obj, false);
@@ -1694,6 +1764,17 @@ function handleFileDrop(file) {
           c.castShadow = true; c.receiveShadow = true;
         }
       });
+      
+      if (obj.animations && obj.animations.length > 0) {
+        const mixer = new THREE.AnimationMixer(obj);
+        S.mixers.push(mixer);
+        obj.userData.mixer = mixer;
+        obj.userData.animations = obj.animations;
+        const action = mixer.clipAction(obj.animations[0]);
+        action.play();
+        action.paused = true; 
+      }
+      
       scene.add(obj);
       S.objs.push(obj);
       selectObject(obj, false);
@@ -1807,6 +1888,7 @@ function executeRender(rc) {
   
   gridGroup.visible = false;
   transform.detach();
+  S.ghostMeshes.forEach(g => g.visible = false);
   S.objs.forEach(o => {
     if (o.isGroup) {
       o.traverse(ch => {
@@ -1840,6 +1922,7 @@ function executeRender(rc) {
   camera.updateProjectionMatrix();
   
   gridGroup.visible = true;
+  S.ghostMeshes.forEach(g => g.visible = true);
   S.objs.forEach(o => {
     if (o.isGroup) {
       o.traverse(ch => {
@@ -1866,6 +1949,206 @@ function executeRender(rc) {
   }
   renderer.render(scene, camera);
   toast('Render Downloaded!');
+}
+
+// --- ANIMATION SYSTEM ---
+function insertKeyframe() {
+  const target = S.actBone || S.actObj;
+  if (!target) { toast('Select an object or bone first'); return; }
+  
+  const uuid = target.uuid;
+  if (!S.animData[uuid]) S.animData[uuid] = { pos: {t:[], v:[]}, rot: {t:[], v:[]}, scale: {t:[], v:[]} };
+  const data = S.animData[uuid];
+  const frame = S.currentFrame;
+
+  function addKf(track, time, vals) {
+    let idx = track.t.findIndex(t => Math.abs(t - time) < 0.5);
+    if (idx > -1) {
+      track.t.splice(idx, 1);
+      track.v.splice(idx * vals.length, vals.length);
+    }
+    track.t.push(time);
+    track.v.push(...vals);
+    let combined = track.t.map((t, i) => ({t, v: track.v.slice(i*vals.length, (i+1)*vals.length)}));
+    combined.sort((a, b) => a.t - b.t);
+    track.t = combined.map(s => s.t);
+    track.v = [].concat(...combined.map(s => s.v));
+  }
+
+  addKf(data.pos, frame, [target.position.x, target.position.y, target.position.z]);
+  addKf(data.rot, frame, [target.quaternion.x, target.quaternion.y, target.quaternion.z, target.quaternion.w]);
+  addKf(data.scale, frame, [target.scale.x, target.scale.y, target.scale.z]);
+
+  rebuildClip(target);
+  updateTimelineKeyframes();
+  updateOnionSkin();
+  toast(`Keyframe inserted at frame ${Math.floor(frame)}`);
+}
+
+function rebuildClip(target) {
+  const data = S.animData[target.uuid];
+  const tracks = [];
+  const fps = S.fps;
+
+  const pTimes = data.pos.t.map(f => f / fps);
+  const rTimes = data.rot.t.map(f => f / fps);
+  const sTimes = data.scale.t.map(f => f / fps);
+
+  if (pTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack('.position', pTimes, data.pos.v));
+  if (rTimes.length > 0) tracks.push(new THREE.QuaternionKeyframeTrack('.quaternion', rTimes, data.rot.v));
+  if (sTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack('.scale', sTimes, data.scale.v));
+
+  if (tracks.length === 0) return;
+
+  const duration = Math.max(...data.pos.t, ...data.rot.t, ...data.scale.t, 1) / fps;
+  const clip = new THREE.AnimationClip('custom', duration, tracks);
+
+  if (!target.userData.mixer) {
+    target.userData.mixer = new THREE.AnimationMixer(target);
+    S.mixers.push(target.userData.mixer);
+  }
+
+  target.userData.mixer.stopAllAction();
+  const action = target.userData.mixer.clipAction(clip);
+  action.play();
+  target.userData.mixer.timeScale = S.isPlaying ? 1.0 : 0.0;
+  target.userData.mixer.setTime(S.currentFrame / fps);
+}
+
+function togglePlay() {
+  S.isPlaying = !S.isPlaying;
+  const playBtn = document.getElementById('play-btn');
+  
+  S.mixers.forEach(mixer => {
+    mixer.timeScale = S.isPlaying ? 1.0 : 0.0;
+  });
+
+  if (S.isPlaying) {
+    playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 H10 V20 H6 Z M14 4 H18 V20 H14 Z"/></svg>'; 
+  } else {
+    playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 L20 12 L6 20 Z"/></svg>'; 
+  }
+}
+
+document.getElementById('play-btn').addEventListener('click', togglePlay);
+document.getElementById('key-btn').addEventListener('click', insertKeyframe);
+
+document.getElementById('stop-btn').addEventListener('click', () => {
+  S.isPlaying = false;
+  S.currentFrame = 0;
+  document.getElementById('frame-input').value = 1;
+  document.getElementById('tline-cursor').style.left = '0.4%';
+  S.mixers.forEach(mixer => {
+    mixer.setTime(0);
+    mixer.timeScale = 0.0;
+  });
+  document.getElementById('play-btn').innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 L20 12 L6 20 Z"/></svg>';
+  updateOnionSkin();
+});
+
+const tlineTrack = document.getElementById('tline-track');
+tlineTrack.addEventListener('click', e => {
+  const rect = tlineTrack.getBoundingClientRect();
+  const percent = (e.clientX - rect.left) / rect.width;
+  S.currentFrame = percent * S.totalFrames;
+  document.getElementById('frame-input').value = Math.floor(S.currentFrame);
+  document.getElementById('tline-cursor').style.left = `${percent * 100}%`;
+  
+  S.mixers.forEach(m => m.setTime(S.currentFrame / S.fps));
+  updateOnionSkin();
+});
+
+document.getElementById('frame-input').addEventListener('change', e => {
+  S.currentFrame = parseInt(e.target.value) || 0;
+  if (S.currentFrame < 0) S.currentFrame = 0;
+  if (S.currentFrame > S.totalFrames) S.currentFrame = S.totalFrames;
+  document.getElementById('tline-cursor').style.left = `${(S.currentFrame / S.totalFrames) * 100}%`;
+  S.mixers.forEach(m => m.setTime(S.currentFrame / S.fps));
+  updateOnionSkin();
+});
+
+function updateTimelineKeyframes() {
+  const track = document.getElementById('tline-track');
+  track.querySelectorAll('.tline-kf').forEach(el => el.remove());
+  
+  const target = S.actBone || S.actObj;
+  if (!target || !S.animData[target.uuid]) return;
+  
+  const data = S.animData[target.uuid];
+  const times = new Set([...data.pos.t, ...data.rot.t, ...data.scale.t]);
+  times.forEach(t => {
+    const percent = (t / S.totalFrames) * 100;
+    const kf = document.createElement('div');
+    kf.className = 'tline-kf';
+    kf.style.left = `${percent}%`;
+    track.appendChild(kf);
+  });
+}
+
+function getInterpolatedState(uuid, frame) {
+  const data = S.animData[uuid];
+  if (!data) return null;
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  
+  function sample(track, frame, size) {
+    if (track.t.length === 0) return null;
+    if (frame <= track.t[0]) return track.v.slice(0, size);
+    if (frame >= track.t[track.t.length-1]) return track.v.slice((track.t.length-1)*size, track.t.length*size);
+    
+    let i0 = 0;
+    for (let i = 0; i < track.t.length; i++) {
+      if (track.t[i] <= frame) i0 = i;
+    }
+    let i1 = i0 + 1;
+    const t0 = track.t[i0];
+    const t1 = track.t[i1];
+    const alpha = (frame - t0) / (t1 - t0);
+    const v0 = track.v.slice(i0*size, (i0+1)*size);
+    const v1 = track.v.slice(i1*size, (i1+1)*size);
+    return v0.map((v, i) => v + (v1[i] - v) * alpha);
+  }
+
+  const pos = sample(data.pos, frame, 3);
+  const rot = sample(data.rot, frame, 4);
+  const scale = sample(data.scale, frame, 3);
+  
+  if (!pos && !rot && !scale) return null;
+  return { pos, rot, scale };
+}
+
+function updateOnionSkin() {
+  S.ghostMeshes.forEach(g => scene.remove(g));
+  S.ghostMeshes = [];
+
+  if (!S.settings.onionSkin || !S.actObj || !S.animData[S.actObj.uuid]) return;
+
+  const count = S.settings.onionCount;
+  for (let i = 1; i <= count; i++) {
+    const pastState = getInterpolatedState(S.actObj.uuid, S.currentFrame - i);
+    if (pastState) createGhost(S.actObj, pastState, 0x880000, 1 - (i / (count + 1)));
+    
+    const futureState = getInterpolatedState(S.actObj.uuid, S.currentFrame + i);
+    if (futureState) createGhost(S.actObj, futureState, 0x0088aa, 1 - (i / (count + 1)));
+  }
+}
+
+function createGhost(target, state, color, opacity) {
+  if (!target.isMesh) return;
+  const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: opacity * 0.4, depthTest: true });
+  const ghost = new THREE.Mesh(target.geometry, mat);
+  
+  if (state.pos) ghost.position.set(state.pos[0], state.pos[1], state.pos[2]);
+  else ghost.position.copy(target.position);
+  
+  if (state.rot) ghost.quaternion.set(state.rot[0], state.rot[1], state.rot[2], state.rot[3]);
+  else ghost.quaternion.copy(target.quaternion);
+  
+  if (state.scale) ghost.scale.set(state.scale[0], state.scale[1], state.scale[2]);
+  else ghost.scale.copy(target.scale);
+  
+  target.parent.add(ghost);
+  S.ghostMeshes.push(ghost);
 }
 
 document.querySelectorAll('.m-item').forEach(item => {
@@ -1910,6 +2193,14 @@ document.querySelectorAll('.m-item').forEach(item => {
 
 document.getElementById('set-offset').addEventListener('change', e => S.settings.pasteOffset = e.target.checked);
 document.getElementById('set-mirror').addEventListener('change', e => S.settings.mirrorPaint = e.target.checked);
+document.getElementById('set-onion').addEventListener('change', e => {
+  S.settings.onionSkin = e.target.checked;
+  updateOnionSkin();
+});
+document.getElementById('set-onion-count').addEventListener('input', e => {
+  S.settings.onionCount = parseInt(e.target.value) || 3;
+  updateOnionSkin();
+});
 
 document.querySelectorAll('.vm').forEach(menu => {
   menu.addEventListener('click', e => {
@@ -1976,7 +2267,6 @@ fGltf.style.display = 'none';
 document.body.appendChild(fGltf);
 fGltf.addEventListener('change', e => { if(e.target.files.length>0) handleFileDrop(e.target.files[0]); });
 
-// Hidden input for FBX
 const fFbx = document.createElement('input');
 fFbx.type = 'file';
 fFbx.accept = '.fbx';
@@ -2038,7 +2328,7 @@ function mkTreeItem(name, iconType, exp, act, pad) {
   if (iconType === 'scene') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 4 L7 2 L12 4 L12 10 L7 12 L2 10 Z" stroke="currentColor" stroke-width="1" fill="none"/></svg>';
   else if (iconType === 'collection') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 5 L7 3 L12 5 L12 9 L7 11 L2 9 Z" stroke="currentColor" stroke-width="1" fill="currentColor" fill-opacity:0.2/></svg>';
   else if (iconType === 'camera') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M1 4 L9 4 L13 8 L13 10 L1 10 Z M9 7 L13 8" stroke="currentColor" stroke-width="1" fill="none"/><circle cx="4" cy="7" r="1.5" stroke="currentColor" stroke-width="1" fill="none"/></svg>';
-  else if (iconType === 'light') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M7 1 L9 5 L13 7 L9 9 L7 13 L5 9 L1 7 L5 5 Z" stroke="currentColor" stroke-width="1" fill="currentColor" fill-opacity:0.3"/></svg>';
+  else if (iconType === 'light') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M7 1 L9 5 L13 7 L9 9 L7 13 L5 9 L1 7 L5 5 Z" stroke="currentColor" stroke-width="1" fill="currentColor" fill-opacity:0.3/></svg>';
   else icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 4 L7 2 L12 4 L12 10 L7 12 L2 10 Z M2 4 L7 6 L12 4 M7 6 L7 12" stroke="currentColor" stroke-width="1" fill="none"/></svg>';
   d.appendChild(icon);
   const nd = document.createElement('div');
@@ -2163,6 +2453,34 @@ function refreshProps() {
           const rv = new THREE.Vector3(o.rotation.x * 180/Math.PI, o.rotation.y * 180/Math.PI, o.rotation.z * 180/Math.PI);
           body.appendChild(mkVec3('Rotation', rv, v => o.rotation.set(v.x * Math.PI/180, v.y * Math.PI/180, v.z * Math.PI/180), false, '0.1'));
           body.appendChild(mkVec3('Scale', o.scale, v => o.scale.set(Math.max(0.001, v.x), Math.max(0.001, v.y), Math.max(0.001, v.z)), false, '0.1'));
+          
+          if (o.userData.animations && o.userData.animations.length > 0) {
+            const animSec = document.createElement('div');
+            animSec.className = 'psec';
+            animSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Animation</div>`;
+            const animBody = document.createElement('div');
+            animBody.className = 'psec-body';
+            
+            const animRow = document.createElement('div');
+            animRow.className = 'prow';
+            let opts = o.userData.animations.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
+            animRow.innerHTML = `<div class="plabel">Action</div><select class="pinput" style="flex:1;">${opts}</select>`;
+            const sel = animRow.querySelector('select');
+            sel.addEventListener('change', e => {
+                const idx = parseInt(e.target.value);
+                const clip = o.userData.animations[idx];
+                const mixer = o.userData.mixer;
+                if (mixer && clip) {
+                    mixer.stopAllAction();
+                    const action = mixer.clipAction(clip);
+                    action.play();
+                    action.paused = !S.isPlaying;
+                }
+            });
+            animBody.appendChild(animRow);
+            animSec.appendChild(animBody);
+            body.appendChild(animSec);
+          }
         } else {
           body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">Groups do not have materials. Select a child part (Alt+Click).</div>';
         }
@@ -2208,6 +2526,34 @@ function refreshProps() {
         if (o.geometry) {
           const bb = new THREE.Box3().setFromObject(o);
           body.appendChild(mkVec3('Dimensions', bb.getSize(new THREE.Vector3()), null, true));
+        }
+        
+        if (o.userData.animations && o.userData.animations.length > 0) {
+          const animSec = document.createElement('div');
+          animSec.className = 'psec';
+          animSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Animation</div>`;
+          const animBody = document.createElement('div');
+          animBody.className = 'psec-body';
+          
+          const animRow = document.createElement('div');
+          animRow.className = 'prow';
+          let opts = o.userData.animations.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
+          animRow.innerHTML = `<div class="plabel">Action</div><select class="pinput" style="flex:1;">${opts}</select>`;
+          const sel = animRow.querySelector('select');
+          sel.addEventListener('change', e => {
+              const idx = parseInt(e.target.value);
+              const clip = o.userData.animations[idx];
+              const mixer = o.userData.mixer;
+              if (mixer && clip) {
+                  mixer.stopAllAction();
+                  const action = mixer.clipAction(clip);
+                  action.play();
+                  action.paused = !S.isPlaying;
+              }
+          });
+          animBody.appendChild(animRow);
+          animSec.appendChild(animBody);
+          body.appendChild(animSec);
         }
       } else {
         let m = Array.isArray(o.material) ? (o.material[S.actMatIndex] || o.material[0]) : o.material;
@@ -2282,7 +2628,6 @@ function refreshProps() {
           ps.appendChild(pb);
           body.appendChild(ps);
 
-          // TEXTURE SECTION
           const texSec = document.createElement('div');
           texSec.className = 'psec';
           texSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Textures</div>`;
@@ -2460,8 +2805,13 @@ function clearScene() {
     scene.remove(o);
   });
   S.objs = []; S.nameCount = {};
+  S.mixers = [];
+  S.animData = {};
+  S.ghostMeshes = [];
   transform.detach(); refreshTree(); refreshProps(); updateStats();
   saveHistory();
+  updateTimelineKeyframes();
+  updateOnionSkin();
 }
 
 function toast(msg) {
@@ -2524,9 +2874,34 @@ function onResize() {
 }
 window.addEventListener('resize', onResize);
 
+let lastKfFrame = -1;
 function animate() {
   requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  
   orbit.update();
+  
+  if (S.mixers.length > 0) {
+    S.mixers.forEach(mixer => {
+      if (S.isPlaying) {
+        mixer.update(delta);
+      } else {
+        mixer.update(0); 
+      }
+    });
+  }
+
+  if (S.isPlaying) {
+    S.currentFrame += delta * S.fps;
+    if (S.currentFrame > S.totalFrames) S.currentFrame = 0;
+    document.getElementById('frame-input').value = Math.floor(S.currentFrame);
+    document.getElementById('tline-cursor').style.left = `${(S.currentFrame / S.totalFrames) * 100}%`;
+    
+    if (Math.floor(S.currentFrame) !== lastKfFrame) {
+      lastKfFrame = Math.floor(S.currentFrame);
+      updateOnionSkin();
+    }
+  }
   
   if (S.poseMode && S.skinnedMesh) {
     S.skinnedMesh.updateMatrixWorld(true);
@@ -2552,7 +2927,7 @@ saveHistory();
 
 setTimeout(() => toast('Welcome to Blender Web! Drag & Drop .obj/.gltf/.fbx to import.'), 500);
 </script>
-  
+
 <script>
     // Wait for the page to load completely
     window.onload = async () => {

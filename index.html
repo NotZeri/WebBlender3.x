@@ -42,22 +42,6 @@ Discord SDK:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -196,7 +180,8 @@ div, button, input, select { box-sizing:border-box; font-family:inherit; font-si
 
 .tline-track { flex:1; height:20px; background:#1d1d1d; border:1px solid #1a1a1a; position:relative; border-radius:2px; overflow:hidden; cursor:pointer; }
 .tline-cursor { position:absolute; top:0; bottom:0; width:2px; background:#e6e6e6; pointer-events:none; z-index:3; }
-.tline-kf { position:absolute; top:50%; width:8px; height:8px; background:#e8c547; transform:translate(-50%, -50%) rotate(45deg); pointer-events:none; z-index:2; box-shadow: 0 0 2px rgba(0,0,0,0.5); }
+.tline-kf { position:absolute; top:50%; width:8px; height:8px; background:#e8c547; transform:translate(-50%, -50%) rotate(45deg); z-index:2; box-shadow: 0 0 2px rgba(0,0,0,0.5); cursor: ew-resize; pointer-events: auto; }
+.tline-kf.selected { background:#ff8800; box-shadow: 0 0 4px rgba(255, 136, 0, 0.8); z-index: 4; }
 
 .status-bar { height:22px; background:#313336; border-top:1px solid #1a1a1a; display:flex; align-items:center; padding:0 8px; gap:16px; color:#a1a1a1; font-size:10px; flex-shrink:0; }
 
@@ -472,12 +457,13 @@ input[type=number] { -moz-appearance:textfield; }
       <li><b>Pose Mode</b> Select a rigged mesh to pose its bones (green dots)</li>
       <li><b>I</b> Insert Keyframe for selected object/bone at current frame</li>
       <li><b>Spacebar</b> Play/Pause Animation</li>
+      <li><b>Timeline</b> Click & Drag keyframes to move them. Press X to delete selected.</li>
       <li><b>Shift + Click</b> Select multiple objects at once</li>
       <li><b>Ctrl + Z / X</b> Undo / Redo</li>
       <li><b>Ctrl + G</b> Group selected objects</li>
       <li><b>G / R / S</b> Move / Rotate / Scale tool</li>
       <li><b>Tab</b> Toggle Edit Mode (vertex editing)</li>
-      <li><b>X / Delete</b> Delete selected object(s)</li>
+      <li><b>X / Delete</b> Delete selected object(s) or keyframe(s)</li>
       <li><b>Ctrl + C / V</b> Copy / Paste selected object(s)</li>
       <li><b>Z</b> Toggle wireframe / solid</li>
       <li><b>F12</b> Render Image (requires Camera)</li>
@@ -529,6 +515,8 @@ const S = {
   totalFrames: 250,
   fps: 30,
   ghostMeshes: [],
+  selectedKeyframe: null,
+  selectedKeyframeTarget: null,
   settings: { pasteOffset: true, mirrorPaint: false, onionSkin: false, onionCount: 3 }
 };
 
@@ -839,6 +827,8 @@ function selectObject(o, add = false) {
     else if (S.tool === 'scale') transform.setMode('scale');
   }
   
+  S.selectedKeyframe = null;
+  S.selectedKeyframeTarget = null;
   refreshTree();
   refreshProps();
   updateTimelineKeyframes();
@@ -1519,8 +1509,13 @@ document.addEventListener('keydown', e => {
     case 'r': setTool('rotate'); break;
     case 's': setTool('scale'); break;
     case 'x': case 'delete':
-      if (S.editMode && S.selVert) { S.selVert = null; transform.detach(); }
-      else delSel();
+      if (S.selectedKeyframe !== null) {
+        deleteSelectedKeyframe();
+      } else if (S.editMode && S.selVert) { 
+        S.selVert = null; transform.detach(); 
+      } else { 
+        delSel(); 
+      }
       break;
     case 'tab':
       e.preventDefault();
@@ -2048,6 +2043,12 @@ document.getElementById('stop-btn').addEventListener('click', () => {
 
 const tlineTrack = document.getElementById('tline-track');
 tlineTrack.addEventListener('click', e => {
+  if (e.target.classList.contains('tline-kf')) return; 
+  
+  S.selectedKeyframe = null;
+  S.selectedKeyframeTarget = null;
+  updateTimelineKeyframes();
+  
   const rect = tlineTrack.getBoundingClientRect();
   const percent = (e.clientX - rect.left) / rect.width;
   S.currentFrame = percent * S.totalFrames;
@@ -2081,8 +2082,96 @@ function updateTimelineKeyframes() {
     const kf = document.createElement('div');
     kf.className = 'tline-kf';
     kf.style.left = `${percent}%`;
+    kf.dataset.time = t;
+    
+    if (S.selectedKeyframe === t && S.selectedKeyframeTarget === target) {
+      kf.classList.add('selected');
+    }
+    
+    kf.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      S.selectedKeyframe = t;
+      S.selectedKeyframeTarget = target;
+      updateTimelineKeyframes(); 
+      
+      const rect = track.getBoundingClientRect();
+      
+      const onMove = (ev) => {
+        const percent = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+        const newTime = percent * S.totalFrames;
+        kf.style.left = `${percent * 100}%`;
+        kf.dataset.time = newTime; 
+      };
+      
+      const onUp = (ev) => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        
+        const percent = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+        const oldTime = S.selectedKeyframe;
+        const newTime = percent * S.totalFrames;
+        
+        updateKeyframeTime(target, oldTime, newTime);
+        S.selectedKeyframe = newTime;
+        rebuildClip(target);
+        updateTimelineKeyframes(); 
+        updateOnionSkin();
+      };
+      
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+    
     track.appendChild(kf);
   });
+}
+
+function updateKeyframeTime(target, oldTime, newTime) {
+  if (!target || !S.animData[target.uuid]) return;
+  const data = S.animData[target.uuid];
+  
+  function moveTrack(track, size) {
+    const idx = track.t.findIndex(t => Math.abs(t - oldTime) < 0.5);
+    if (idx > -1) {
+      track.t[idx] = newTime;
+      let combined = track.t.map((t, i) => ({t, v: track.v.slice(i*size, (i+1)*size)}));
+      combined.sort((a, b) => a.t - b.t);
+      track.t = combined.map(s => s.t);
+      track.v = [].concat(...combined.map(s => s.v));
+    }
+  }
+  
+  moveTrack(data.pos, 3);
+  moveTrack(data.rot, 4);
+  moveTrack(data.scale, 3);
+}
+
+function deleteSelectedKeyframe() {
+  if (S.selectedKeyframe === null || !S.selectedKeyframeTarget) return;
+  const target = S.selectedKeyframeTarget;
+  const time = S.selectedKeyframe;
+  if (!S.animData[target.uuid]) return;
+  const data = S.animData[target.uuid];
+  
+  function removeTrack(track, size) {
+    const idx = track.t.findIndex(t => Math.abs(t - time) < 0.5);
+    if (idx > -1) {
+      track.t.splice(idx, 1);
+      track.v.splice(idx * size, size);
+    }
+  }
+  
+  removeTrack(data.pos, 3);
+  removeTrack(data.rot, 4);
+  removeTrack(data.scale, 3);
+  
+  S.selectedKeyframe = null;
+  S.selectedKeyframeTarget = null;
+  
+  rebuildClip(target);
+  updateTimelineKeyframes();
+  updateOnionSkin();
+  toast('Keyframe deleted');
 }
 
 function getInterpolatedState(uuid, frame) {
@@ -2929,9 +3018,7 @@ setTimeout(() => toast('Welcome to Blender Web! Drag & Drop .obj/.gltf/.fbx to i
 </script>
 
 <script>
-    // Wait for the page to load completely
     window.onload = async () => {
-        // Check if it's running inside Discord
         if (typeof DiscordSDK !== 'undefined') {
             const discordSdk = new DiscordSDK("1542418594527453224"); // Your Bot's Application ID
             await discordSdk.ready();

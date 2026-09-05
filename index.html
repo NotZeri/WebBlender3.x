@@ -1,47 +1,3 @@
-<!-- 
-Unreadable mess never using three.js again
-
-Learning how to use this has teached me that you should just use a Engine to make 3D html games
-
-
-Discord SDK:
-
-<head>
-<script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.0.3/dist/discord-sdk.min.js"></script>
-</head>
-
-....
-
-<script>
-    // Wait for the page to load completely
-    window.onload = async () => {
-        // Check if it's running inside Discord
-        if (typeof DiscordSDK !== 'undefined') {
-            const discordSdk = new DiscordSDK("1542418594527453224"); // Your Bot's Application ID
-            await discordSdk.ready();
-            console.log("Discord Activity Loaded Successfully!");
-        }
-    };
-</script>
-
-</body>
-
--->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -182,6 +138,9 @@ div, button, input, select { box-sizing:border-box; font-family:inherit; font-si
 .tline-cursor { position:absolute; top:0; bottom:0; width:2px; background:#e6e6e6; pointer-events:none; z-index:3; }
 .tline-kf { position:absolute; top:50%; width:8px; height:8px; background:#e8c547; transform:translate(-50%, -50%) rotate(45deg); z-index:2; box-shadow: 0 0 2px rgba(0,0,0,0.5); cursor: ew-resize; pointer-events: auto; }
 .tline-kf.selected { background:#ff8800; box-shadow: 0 0 4px rgba(255, 136, 0, 0.8); z-index: 4; }
+.tline-kf.other { background:#5a7a9a; opacity:0.5; }
+.tline-kf.other.selected { background:#ff8800; opacity:1; }
+
 
 .status-bar { height:22px; background:#313336; border-top:1px solid #1a1a1a; display:flex; align-items:center; padding:0 8px; gap:16px; color:#a1a1a1; font-size:10px; flex-shrink:0; }
 
@@ -218,6 +177,12 @@ div, button, input, select { box-sizing:border-box; font-family:inherit; font-si
 .help-card li b { color:#e6e6e6; display:inline-block; width:120px; }
 .help-card .close-btn { margin-top:16px; padding:6px 16px; background:#4772b3; color:white; border:none; border-radius:3px; cursor:pointer; }
 
+/* Asset Modal Styles */
+.asset-item { background:#404040; color:#e6e6e6; border:1px solid #444448; padding:6px 8px; cursor:pointer; border-radius:3px; text-align:left; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.asset-item:hover { background:#4772b3; }
+.asset-del { background:#883333; color:white; border:1px solid #aa4444; padding:6px 8px; cursor:pointer; border-radius:3px; width: 30px; text-align:center; flex-shrink: 0; }
+.asset-del:hover { background:#aa4444; }
+
 ::-webkit-scrollbar { width:8px; height:8px; }
 ::-webkit-scrollbar-track { background:#1d1d1d; }
 ::-webkit-scrollbar-thumb { background:#404040; border-radius:4px; }
@@ -243,6 +208,7 @@ input[type=number] { -moz-appearance:textfield; }
   <div class="menus">
     <div class="m-item" data-m="file">File</div>
     <div class="m-item" data-m="edit">Edit</div>
+    <div class="m-item" data-m="assets">Assets</div>
     <div class="m-item" data-m="render">Render</div>
     <div class="m-item" data-m="help">Help</div>
   </div>
@@ -446,33 +412,46 @@ input[type=number] { -moz-appearance:textfield; }
   </div>
 </div>
 
+<div class="modal" id="assets-modal">
+  <div class="m-card" style="max-width: 500px; width: 90%; text-align: left; padding: 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2 style="margin:0;">Asset Storage (Tip: Hold Alt and Click to go in models)</h2>
+      <button class="btn" onclick="document.getElementById('assets-modal').classList.remove('show')" style="padding:2px 10px; min-width:30px;">X</button>
+    </div>
+    <div style="display:flex; gap:20px; height: 350px;">
+      <div style="flex:1; display:flex; flex-direction:column;">
+        <h3 style="font-size:12px; margin-bottom:8px; border-bottom:1px solid #444448; padding-bottom:4px; color:#e6e6e6;">Built-in Assets</h3>
+        <div id="builtin-assets" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1;"></div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column;">
+        <h3 style="font-size:12px; margin-bottom:8px; border-bottom:1px solid #444448; padding-bottom:4px; color:#e6e6e6;">My Stored Assets</h3>
+        <button id="upload-asset-btn" class="btn primary" style="width:100%; margin-bottom:10px; min-width: auto;">+ Upload to Storage</button>
+        <input type="file" id="upload-asset-input" style="display:none;" accept=".obj,.gltf,.glb,.fbx">
+        <div id="custom-assets" style="display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="help">
   <div class="help-card">
     <h2>WebBlender 3.x</h2>
-    <p style="color:#a1a1a1; margin-bottom:12px;">A shitty but accurate recreation of the Blender 3.x interface with core 3D modeling features.</p>
+    <p style="color:#a1a1a1; margin-bottom:12px;">A faithful(accurate :3) recreation of the Blender 3.x interface.</p>
     <ul>
       <li><b>Shift + A</b> Add objects, cameras, or lights</li>
-      <li><b>Alt + Click</b> Cycles through overlapping parts and their parent groups</li>
-      <li><b>Right-Click > Separate</b> Splits a multi-material object into separate parts</li>
-      <li><b>Pose Mode</b> Select a rigged mesh to pose its bones (green dots)</li>
-      <li><b>I</b> Insert Keyframe for selected object/bone at current frame</li>
+      <li><b>Alt + Click</b> Cycles through overlapping parts</li>
+      <li><b>Pose Mode</b> Select a rigged mesh to pose its bones</li>
+      <li><b>I</b> Insert Keyframe at current frame</li>
       <li><b>Spacebar</b> Play/Pause Animation</li>
-      <li><b>Timeline</b> Click & Drag keyframes to move them. Press X to delete selected.</li>
-      <li><b>Shift + Click</b> Select multiple objects at once</li>
+      <li><b>Timeline</b> Click & Drag keyframes to move them. Press X to delete.</li>
+      <li><b>Shift + Click</b> Select multiple objects</li>
       <li><b>Ctrl + Z / X</b> Undo / Redo</li>
-      <li><b>Ctrl + G</b> Group selected objects</li>
       <li><b>G / R / S</b> Move / Rotate / Scale tool</li>
-      <li><b>Tab</b> Toggle Edit Mode (vertex editing)</li>
-      <li><b>X / Delete</b> Delete selected object(s) or keyframe(s)</li>
-      <li><b>Ctrl + C / V</b> Copy / Paste selected object(s)</li>
-      <li><b>Z</b> Toggle wireframe / solid</li>
+      <li><b>Tab</b> Toggle Edit Mode</li>
+      <li><b>X / Delete</b> Delete object or keyframe</li>
+      <li><b>Ctrl + C / V</b> Copy / Paste objects</li>
       <li><b>F12</b> Render Image (requires Camera)</li>
-      <li><b>Numpad 1/3/7</b> Front / Right / Top view</li>
-      <li><b>Home</b> Frame all</li>
-      <li><b>Right-click</b> Context menu (Outliner & 3D View)</li>
-      <li><b>Drag & Drop</b> Import .obj, .gltf, .glb, or .fbx files</li>
-      <li><b>Paint Tool</b> Draw textures directly on 3D models</li>
-      <li><b>Middle-drag</b> Orbit &nbsp; <b>Shift+Middle</b> Pan &nbsp; <b>Wheel</b> Zoom</li>
+      <li><b>Drag & Drop</b> Import .obj, .gltf, .glb, or .fbx</li>
     </ul>
     <button class="close-btn" onclick="document.getElementById('help').classList.remove('show')">Got it</button>
   </div>
@@ -527,51 +506,23 @@ let hIndex = -1;
 
 function saveHistory() {
   history = history.slice(0, hIndex + 1);
-  const snap = S.objs.map(o => ({
-    ref: o,
-    pos: o.position.clone(),
-    rot: o.rotation.clone(),
-    scale: o.scale.clone()
-  }));
+  const snap = S.objs.map(o => ({ ref: o, pos: o.position.clone(), rot: o.rotation.clone(), scale: o.scale.clone() }));
   history.push(snap);
   if (history.length > 30) history.shift();
   hIndex = history.length - 1;
 }
 
 function applyHist(snap) {
-  S.objs.forEach(o => {
-    if (o.userData.helper) scene.remove(o.userData.helper);
-    if (o.parent) o.parent.remove(o);
-  });
+  S.objs.forEach(o => { if (o.userData.helper) scene.remove(o.userData.helper); if (o.parent) o.parent.remove(o); });
   S.objs = [];
-
-  snap.forEach(s => {
-    scene.add(s.ref);
-    if (s.ref.userData.helper) scene.add(s.ref.userData.helper);
-    S.objs.push(s.ref);
-    s.ref.position.copy(s.pos);
-    s.ref.rotation.copy(s.rot);
-    s.ref.scale.copy(s.scale);
-  });
-
+  snap.forEach(s => { scene.add(s.ref); if (s.ref.userData.helper) scene.add(s.ref.userData.helper); S.objs.push(s.ref); s.ref.position.copy(s.pos); s.ref.rotation.copy(s.rot); s.ref.scale.copy(s.scale); });
   selectObject(null, false);
   refreshTree();
   updateStats();
 }
 
-function undo() {
-  if (hIndex <= 0) return;
-  hIndex--;
-  applyHist(history[hIndex]);
-  toast('Undo');
-}
-
-function redo() {
-  if (hIndex >= history.length - 1) return;
-  hIndex++;
-  applyHist(history[hIndex]);
-  toast('Redo');
-}
+function undo() { if (hIndex <= 0) return; hIndex--; applyHist(history[hIndex]); toast('Undo'); }
+function redo() { if (hIndex >= history.length - 1) return; hIndex++; applyHist(history[hIndex]); toast('Redo'); }
 
 const vp = document.getElementById('vp');
 const canvas = document.getElementById('c');
@@ -583,56 +534,32 @@ renderer.setSize(vp.clientWidth, vp.clientHeight);
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(50, vp.clientWidth / vp.clientHeight, 0.1, 1000);
-camera.up.set(0, 0, 1); 
-camera.position.set(7.3589, -6.9258, 4.9583); 
-camera.lookAt(0, 0, 0);
+camera.up.set(0, 0, 1); camera.position.set(7.3589, -6.9258, 4.9583); camera.lookAt(0, 0, 0);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-sun.position.set(5, -3, 8);
-scene.add(sun);
-const fill = new THREE.DirectionalLight(0x88aaff, 0.3);
-fill.position.set(-5, 5, 3);
-scene.add(fill);
+const sun = new THREE.DirectionalLight(0xffffff, 0.8); sun.position.set(5, -3, 8); scene.add(sun);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.3); fill.position.set(-5, 5, 3); scene.add(fill);
 
 function makeGrid() {
-  const group = new THREE.Group();
-  const size = 16;
-  const minorPos = [];
-  for (let i = -size; i <= size; i++) {
-    minorPos.push(-size, i, 0, size, i, 0);
-    minorPos.push(i, -size, 0, i, size, 0);
-  }
-  const minorGeom = new THREE.BufferGeometry();
-  minorGeom.setAttribute('position', new THREE.Float32BufferAttribute(minorPos, 3));
+  const group = new THREE.Group(); const size = 16; const minorPos = [];
+  for (let i = -size; i <= size; i++) { minorPos.push(-size, i, 0, size, i, 0); minorPos.push(i, -size, 0, i, size, 0); }
+  const minorGeom = new THREE.BufferGeometry(); minorGeom.setAttribute('position', new THREE.Float32BufferAttribute(minorPos, 3));
   group.add(new THREE.LineSegments(minorGeom, new THREE.LineBasicMaterial({ color: 0x26282a })));
-  
   const majorPos = [];
-  for (let i = -size; i <= size; i += 4) {
-    majorPos.push(-size, i, 0, size, i, 0);
-    majorPos.push(i, -size, 0, i, size, 0);
-  }
-  const majorGeom = new THREE.BufferGeometry();
-  majorGeom.setAttribute('position', new THREE.Float32BufferAttribute(majorPos, 3));
+  for (let i = -size; i <= size; i += 4) { majorPos.push(-size, i, 0, size, i, 0); majorPos.push(i, -size, 0, i, size, 0); }
+  const majorGeom = new THREE.BufferGeometry(); majorGeom.setAttribute('position', new THREE.Float32BufferAttribute(majorPos, 3));
   group.add(new THREE.LineSegments(majorGeom, new THREE.LineBasicMaterial({ color: 0x3a3d40 })));
-  
-  const xGeom = new THREE.BufferGeometry();
-  xGeom.setAttribute('position', new THREE.Float32BufferAttribute([-size, 0, 0, size, 0, 0], 3));
+  const xGeom = new THREE.BufferGeometry(); xGeom.setAttribute('position', new THREE.Float32BufferAttribute([-size, 0, 0, size, 0, 0], 3));
   group.add(new THREE.Line(xGeom, new THREE.LineBasicMaterial({ color: 0x803030 })));
-  
-  const yGeom = new THREE.BufferGeometry();
-  yGeom.setAttribute('position', new THREE.Float32BufferAttribute([0, -size, 0, 0, size, 0], 3));
+  const yGeom = new THREE.BufferGeometry(); yGeom.setAttribute('position', new THREE.Float32BufferAttribute([0, -size, 0, 0, size, 0], 3));
   group.add(new THREE.Line(yGeom, new THREE.LineBasicMaterial({ color: 0x2a5a2a })));
-  
   return group;
 }
-
 const gridGroup = makeGrid();
 scene.add(gridGroup);
 
 const orbit = new OrbitControls(camera, renderer.domElement);
-orbit.enableDamping = true;
-orbit.dampingFactor = 0.12;
+orbit.enableDamping = true; orbit.dampingFactor = 0.12;
 orbit.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.ROTATE, RIGHT: THREE.MOUSE.PAN };
 orbit.target.set(0, 0, 0);
 
@@ -644,16 +571,9 @@ transform.setSize(0.75);
 transform.addEventListener('dragging-changed', e => { 
   orbit.enabled = !e.value; 
   if (e.value && S.selObjs.length > 1 && !S.editMode && !S.poseMode) {
-    S.dragStart = {
-      activeMatrix: S.actObj.matrixWorld.clone(),
-      otherObjects: S.selObjs.filter(o => o !== S.actObj).map(o => ({
-        obj: o,
-        matrix: o.matrixWorld.clone()
-      }))
-    };
+    S.dragStart = { activeMatrix: S.actObj.matrixWorld.clone(), otherObjects: S.selObjs.filter(o => o !== S.actObj).map(o => ({ obj: o, matrix: o.matrixWorld.clone() })) };
   } else if (!e.value) {
-    S.dragStart = null;
-    saveHistory();
+    S.dragStart = null; saveHistory(); refreshProps();
   }
 });
 transform.addEventListener('objectChange', () => {
@@ -663,368 +583,65 @@ transform.addEventListener('objectChange', () => {
     const activeCurrent = S.actObj.matrixWorld.clone();
     const activeStartInv = new THREE.Matrix4().copy(S.dragStart.activeMatrix).invert();
     const delta = new THREE.Matrix4().multiplyMatrices(activeCurrent, activeStartInv);
-    
     S.dragStart.otherObjects.forEach(item => {
       const newMat = new THREE.Matrix4().multiplyMatrices(delta, item.matrix);
       const parent = item.obj.parent;
-      if (parent) {
-        const parentInv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
-        const localMat = new THREE.Matrix4().multiplyMatrices(parentInv, newMat);
-        localMat.decompose(item.obj.position, item.obj.quaternion, item.obj.scale);
-      } else {
-        newMat.decompose(item.obj.position, item.obj.quaternion, item.obj.scale);
-      }
+      if (parent) { const parentInv = new THREE.Matrix4().copy(parent.matrixWorld).invert(); const localMat = new THREE.Matrix4().multiplyMatrices(parentInv, newMat); localMat.decompose(item.obj.position, item.obj.quaternion, item.obj.scale); } 
+      else { newMat.decompose(item.obj.position, item.obj.quaternion, item.obj.scale); }
       if (item.obj.userData.helper) item.obj.userData.helper.update();
     });
   }
-  refreshProps();
 });
 scene.add(transform);
 
-function genName(t) {
-  S.nameCount[t] = (S.nameCount[t] || 0) + 1;
-  const n = S.nameCount[t];
-  return n === 1 ? t : `${t}.${String(n-1).padStart(3,'0')}`;
-}
+function genName(t) { S.nameCount[t] = (S.nameCount[t] || 0) + 1; const n = S.nameCount[t]; return n === 1 ? t : `${t}.${String(n-1).padStart(3,'0')}`; }
+function makeGeom(t) { let g; switch(t) { case 'Cube': g = new THREE.BoxGeometry(2, 2, 2); break; case 'UV Sphere': g = new THREE.SphereGeometry(1, 32, 16); break; case 'Ico Sphere': g = new THREE.IcosahedronGeometry(1, 1); break; case 'Cylinder': g = new THREE.CylinderGeometry(1, 1, 2, 32); g.rotateX(Math.PI / 2); break; case 'Cone': g = new THREE.ConeGeometry(1, 2, 32); g.rotateX(Math.PI / 2); break; case 'Torus': g = new THREE.TorusGeometry(1, 0.3, 16, 48); break; case 'Plane': g = new THREE.PlaneGeometry(2, 2); break; default: g = new THREE.BoxGeometry(2, 2, 2); } return g; }
 
-function makeGeom(t) {
-  let g;
-  switch(t) {
-    case 'Cube': g = new THREE.BoxGeometry(2, 2, 2); break;
-    case 'UV Sphere': g = new THREE.SphereGeometry(1, 32, 16); break;
-    case 'Ico Sphere': g = new THREE.IcosahedronGeometry(1, 1); break;
-    case 'Cylinder': g = new THREE.CylinderGeometry(1, 1, 2, 32); g.rotateX(Math.PI / 2); break;
-    case 'Cone': g = new THREE.ConeGeometry(1, 2, 32); g.rotateX(Math.PI / 2); break;
-    case 'Torus': g = new THREE.TorusGeometry(1, 0.3, 16, 48); break;
-    case 'Plane': g = new THREE.PlaneGeometry(2, 2); break;
-    default: g = new THREE.BoxGeometry(2, 2, 2);
-  }
-  return g;
-}
+function addObj(t) { const g = makeGeom(t); const m = new THREE.MeshPhongMaterial({ color: 0xcccccc, flatShading: false, side: THREE.DoubleSide }); const mesh = new THREE.Mesh(g, m); mesh.name = genName(t === 'UV Sphere' ? 'Sphere' : t === 'Ico Sphere' ? 'Icosphere' : t); scene.add(mesh); S.objs.push(mesh); selectObject(mesh, false); refreshTree(); updateStats(); saveHistory(); }
 
-function addObj(t) {
-  const g = makeGeom(t);
-  const m = new THREE.MeshPhongMaterial({ color: 0xcccccc, flatShading: false, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(g, m);
-  mesh.name = genName(t === 'UV Sphere' ? 'Sphere' : t === 'Ico Sphere' ? 'Icosphere' : t);
-  scene.add(mesh);
-  S.objs.push(mesh);
-  selectObject(mesh, false);
-  refreshTree();
-  updateStats();
-  saveHistory();
-}
-
-function addCam() {
-  const c = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
-  c.name = genName('Camera');
-  c.up.set(0, 0, 1);
-  c.position.set(6, -6, 5);
-  c.lookAt(0, 0, 0);
-  scene.add(c);
-  S.objs.push(c);
-  
-  const h = new THREE.CameraHelper(c);
-  h.material.color.set(0x000000);
-  h.name = '__helper__';
-  h.raycast = () => {}; 
-  scene.add(h);
-  c.userData.helper = h;
-  
-  selectObject(c, false);
-  refreshTree();
-  saveHistory();
-}
-
-function addLight(type) {
-  let light, helper;
-  if (type === 'Sun') {
-    light = new THREE.DirectionalLight(0xffffff, 1.0);
-    light.position.set(5, -5, 8);
-    light.target.position.set(0, 0, 0);
-    scene.add(light.target);
-    helper = new THREE.DirectionalLightHelper(light, 1, 0xffff00);
-  } else if (type === 'Point') {
-    light = new THREE.PointLight(0xffffff, 1.0, 100);
-    light.position.set(0, 0, 3);
-    helper = new THREE.PointLightHelper(light, 0.5, 0xffff00);
-  }
-  light.name = genName(type);
-  scene.add(light);
-  S.objs.push(light);
-  
-  helper.name = '__helper__';
-  helper.raycast = () => {}; 
-  scene.add(helper);
-  light.userData.helper = helper;
-  
-  selectObject(light, false);
-  refreshTree();
-  saveHistory();
-}
+function addCam() { const c = new THREE.PerspectiveCamera(50, 1, 0.1, 1000); c.name = genName('Camera'); c.up.set(0, 0, 1); c.position.set(6, -6, 5); c.lookAt(0, 0, 0); scene.add(c); S.objs.push(c); const h = new THREE.CameraHelper(c); h.material.color.set(0x000000); h.name = '__helper__'; h.raycast = () => {}; scene.add(h); c.userData.helper = h; selectObject(c, false); refreshTree(); saveHistory(); }
+function addLight(type) { let light, helper; if (type === 'Sun') { light = new THREE.DirectionalLight(0xffffff, 1.0); light.position.set(5, -5, 8); light.target.position.set(0, 0, 0); scene.add(light.target); helper = new THREE.DirectionalLightHelper(light, 1, 0xffff00); } else if (type === 'Point') { light = new THREE.PointLight(0xffffff, 1.0, 100); light.position.set(0, 0, 3); helper = new THREE.PointLightHelper(light, 0.5, 0xffff00); } light.name = genName(type); scene.add(light); S.objs.push(light); helper.name = '__helper__'; helper.raycast = () => {}; scene.add(helper); light.userData.helper = helper; selectObject(light, false); refreshTree(); saveHistory(); }
 
 function selectObject(o, add = false) {
   if (S.poseMode) exitPoseMode();
   if (S.editMode) editOff();
-
-  if (add && o) {
-    const i = S.selObjs.indexOf(o);
-    if (i > -1) {
-      if (S.selObjs.length > 1) {
-        S.selObjs.splice(i, 1);
-        if (S.actObj === o) S.actObj = S.selObjs[S.selObjs.length - 1] || null;
-      }
-    } else {
-      S.selObjs.push(o);
-      S.actObj = o;
-    }
-  } else {
-    if (o) {
-      S.selObjs = [o];
-      S.actObj = o;
-    } else {
-      S.selObjs = [];
-      S.actObj = null;
-    }
-  }
-
-  if (o && o.parent && !S.objs.includes(o)) {
-    let p = o.parent;
-    while (p) {
-      if (p.isGroup) p.expanded = true;
-      p = p.parent;
-    }
-  }
-
-  S.objs.forEach(x => {
-    if (x.isGroup) {
-      x.traverse(ch => {
-        const out = ch.getObjectByName('__outline__');
-        if (out) ch.remove(out);
-      });
-    } else {
-      const out = x.getObjectByName('__outline__');
-      if (out) x.remove(out);
-    }
-  });
-
-  S.selObjs.forEach(x => {
-    if (x.isMesh && x.geometry) {
-      const e = new THREE.EdgesGeometry(x.geometry, 30);
-      const out = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color: 0xff8800, depthTest: false, transparent: true }));
-      out.name = '__outline__';
-      out.renderOrder = 1;
-      out.raycast = () => {}; 
-      x.add(out);
-    }
-  });
-
+  if (add && o) { const i = S.selObjs.indexOf(o); if (i > -1) { if (S.selObjs.length > 1) { S.selObjs.splice(i, 1); if (S.actObj === o) S.actObj = S.selObjs[S.selObjs.length - 1] || null; } } else { S.selObjs.push(o); S.actObj = o; } } 
+  else { if (o) { S.selObjs = [o]; S.actObj = o; } else { S.selObjs = []; S.actObj = null; } }
+  if (o && o.parent && !S.objs.includes(o)) { let p = o.parent; while (p) { if (p.isGroup) p.expanded = true; p = p.parent; } }
+  S.objs.forEach(x => { if (x.isGroup) { x.traverse(ch => { const out = ch.getObjectByName('__outline__'); if (out) ch.remove(out); }); } else { const out = x.getObjectByName('__outline__'); if (out) x.remove(out); } });
+  S.selObjs.forEach(x => { if (x.isMesh && x.geometry) { const e = new THREE.EdgesGeometry(x.geometry, 30); const out = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color: 0xff8800, depthTest: false, transparent: true })); out.name = '__outline__'; out.renderOrder = 1; out.raycast = () => {}; x.add(out); } });
   transform.detach();
-  if (S.selObjs.length > 0 && !S.editMode && !S.poseMode && S.tool !== 'paint') {
-    transform.attach(S.actObj);
-    if (S.tool === 'move') transform.setMode('translate');
-    else if (S.tool === 'rotate') transform.setMode('rotate');
-    else if (S.tool === 'scale') transform.setMode('scale');
-  }
-  
-  S.selectedKeyframe = null;
-  S.selectedKeyframeTarget = null;
-  refreshTree();
-  refreshProps();
-  updateTimelineKeyframes();
-  updateOnionSkin();
+  if (S.selObjs.length > 0 && !S.editMode && !S.poseMode && S.tool !== 'paint') { transform.attach(S.actObj); if (S.tool === 'move') transform.setMode('translate'); else if (S.tool === 'rotate') transform.setMode('rotate'); else if (S.tool === 'scale') transform.setMode('scale'); }
+  S.selectedKeyframe = null; S.selectedKeyframeTarget = null;
+  refreshTree(); refreshProps(); updateTimelineKeyframes(); updateOnionSkin();
 }
 
-function groupSel() {
-  if (S.selObjs.length < 1) return;
-  const g = new THREE.Group();
-  g.name = genName('Group');
-  g.expanded = true;
-  scene.add(g);
-  
-  const objs = [...S.selObjs];
-  objs.forEach(o => {
-    g.attach(o);
-    const i = S.objs.indexOf(o);
-    if (i > -1) S.objs.splice(i, 1);
-  });
-  
-  S.objs.push(g);
-  selectObject(g, false);
-  refreshTree();
-  toast('Grouped objects');
-  saveHistory();
-}
+function groupSel() { if (S.selObjs.length < 1) return; const g = new THREE.Group(); g.name = genName('Group'); g.expanded = true; scene.add(g); const objs = [...S.selObjs]; objs.forEach(o => { g.attach(o); const i = S.objs.indexOf(o); if (i > -1) S.objs.splice(i, 1); }); S.objs.push(g); selectObject(g, false); refreshTree(); toast('Grouped objects'); saveHistory(); }
+function ungroup(g) { if (!g || !g.isGroup) return; const ch = [...g.children]; ch.forEach(c => { scene.attach(c); S.objs.push(c); }); scene.remove(g); S.objs = S.objs.filter(o => o !== g); if (ch.length > 0) selectObject(ch[0], false); else selectObject(null, false); refreshTree(); toast('Ungrouped objects'); saveHistory(); }
 
-function ungroup(g) {
-  if (!g || !g.isGroup) return;
-  const ch = [...g.children];
-  ch.forEach(c => { scene.attach(c); S.objs.push(c); });
-  scene.remove(g);
-  S.objs = S.objs.filter(o => o !== g);
-  if (ch.length > 0) selectObject(ch[0], false);
-  else selectObject(null, false);
-  refreshTree();
-  toast('Ungrouped objects');
-  saveHistory();
-}
+function separateByMaterial(mesh) { if (!mesh.isMesh || !mesh.geometry || !mesh.geometry.groups || mesh.geometry.groups.length <= 1) { toast('Mesh has no multiple materials to separate'); return; } const geom = mesh.geometry; const pos = geom.attributes.position; const norm = geom.attributes.normal; const uv = geom.attributes.uv; const idx = geom.index ? geom.index.array : null; const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]; const matrixWorld = mesh.matrixWorld.clone(); const newObjs = []; mesh.geometry.groups.forEach((group) => { const mat = materials[group.materialIndex] || materials[0]; const newGeom = new THREE.BufferGeometry(); const newPos = []; const newNorm = []; const newUv = []; const newIdx = []; const start = group.start; const count = group.count; const vMap = {}; let vIdx = 0; if (idx) { for (let j = start; j < start + count; j++) { const origIdx = idx[j]; if (vMap[origIdx] === undefined) { vMap[origIdx] = vIdx++; newPos.push(pos.getX(origIdx), pos.getY(origIdx), pos.getZ(origIdx)); if (norm) newNorm.push(norm.getX(origIdx), norm.getY(origIdx), norm.getZ(origIdx)); if (uv) newUv.push(uv.getX(origIdx), uv.getY(origIdx)); } newIdx.push(vMap[origIdx]); } newGeom.setIndex(newIdx); } else { for (let j = start; j < start + count; j+=3) { for(let k=0; k<3; k++) { const origIdx = j + k; newPos.push(pos.getX(origIdx), pos.getY(origIdx), pos.getZ(origIdx)); if (norm) newNorm.push(norm.getX(origIdx), norm.getY(origIdx), norm.getZ(origIdx)); if (uv) newUv.push(uv.getX(origIdx), uv.getY(origIdx)); } } } newGeom.setAttribute('position', new THREE.Float32BufferAttribute(newPos, 3)); if (newNorm.length > 0) newGeom.setAttribute('normal', new THREE.Float32BufferAttribute(newNorm, 3)); if (newUv.length > 0) newGeom.setAttribute('uv', new THREE.Float32BufferAttribute(newUv, 2)); const newMesh = new THREE.Mesh(newGeom, mat); newMesh.name = genName(mesh.name + "_part"); newMesh.castShadow = true; newMesh.receiveShadow = true; scene.add(newMesh); const posVec = new THREE.Vector3(); const quat = new THREE.Quaternion(); const scale = new THREE.Vector3(); matrixWorld.decompose(posVec, quat, scale); newMesh.position.copy(posVec); newMesh.quaternion.copy(quat); newMesh.scale.copy(scale); newObjs.push(newMesh); }); const rm = (arr, t) => { let i = arr.indexOf(t); if (i > -1) { arr.splice(i, 1); return true; } for (let j = 0; j < arr.length; j++) { if (arr[j].isGroup && rm(arr[j].children, t)) return true; } return false; }; rm(S.objs, mesh); if (mesh.parent) mesh.parent.remove(mesh); S.objs.push(...newObjs); selectObject(newObjs[0], false); refreshTree(); updateStats(); toast('Separated mesh by material'); saveHistory(); }
 
-function separateByMaterial(mesh) {
-  if (!mesh.isMesh || !mesh.geometry || !mesh.geometry.groups || mesh.geometry.groups.length <= 1) {
-    toast('Mesh has no multiple materials to separate');
-    return;
-  }
-  
-  const geom = mesh.geometry;
-  const pos = geom.attributes.position;
-  const norm = geom.attributes.normal;
-  const uv = geom.attributes.uv;
-  const idx = geom.index ? geom.index.array : null;
-  
-  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-  const matrixWorld = mesh.matrixWorld.clone();
-  
-  const newObjs = [];
-  
-  mesh.geometry.groups.forEach((group) => {
-    const mat = materials[group.materialIndex] || materials[0];
-    
-    const newGeom = new THREE.BufferGeometry();
-    const newPos = [];
-    const newNorm = [];
-    const newUv = [];
-    const newIdx = [];
-    
-    const start = group.start;
-    const count = group.count;
-    
-    const vMap = {};
-    let vIdx = 0;
-    
-    if (idx) {
-      for (let j = start; j < start + count; j++) {
-        const origIdx = idx[j];
-        if (vMap[origIdx] === undefined) {
-          vMap[origIdx] = vIdx++;
-          newPos.push(pos.getX(origIdx), pos.getY(origIdx), pos.getZ(origIdx));
-          if (norm) newNorm.push(norm.getX(origIdx), norm.getY(origIdx), norm.getZ(origIdx));
-          if (uv) newUv.push(uv.getX(origIdx), uv.getY(origIdx));
-        }
-        newIdx.push(vMap[origIdx]);
-      }
-      newGeom.setIndex(newIdx);
-    } else {
-      for (let j = start; j < start + count; j+=3) {
-        for(let k=0; k<3; k++) {
-          const origIdx = j + k;
-          newPos.push(pos.getX(origIdx), pos.getY(origIdx), pos.getZ(origIdx));
-          if (norm) newNorm.push(norm.getX(origIdx), norm.getY(origIdx), norm.getZ(origIdx));
-          if (uv) newUv.push(uv.getX(origIdx), uv.getY(origIdx));
-        }
-      }
-    }
-    
-    newGeom.setAttribute('position', new THREE.Float32BufferAttribute(newPos, 3));
-    if (newNorm.length > 0) newGeom.setAttribute('normal', new THREE.Float32BufferAttribute(newNorm, 3));
-    if (newUv.length > 0) newGeom.setAttribute('uv', new THREE.Float32BufferAttribute(newUv, 2));
-    
-    const newMesh = new THREE.Mesh(newGeom, mat);
-    newMesh.name = genName(mesh.name + "_part");
-    newMesh.castShadow = true;
-    newMesh.receiveShadow = true;
-    
-    scene.add(newMesh);
-    
-    const posVec = new THREE.Vector3();
-    const quat = new THREE.Quaternion();
-    const scale = new THREE.Vector3();
-    matrixWorld.decompose(posVec, quat, scale);
-    newMesh.position.copy(posVec);
-    newMesh.quaternion.copy(quat);
-    newMesh.scale.copy(scale);
-    
-    newObjs.push(newMesh);
-  });
-  
-  const rm = (arr, t) => {
-    let i = arr.indexOf(t);
-    if (i > -1) { arr.splice(i, 1); return true; }
-    for (let j = 0; j < arr.length; j++) {
-      if (arr[j].isGroup && rm(arr[j].children, t)) return true;
-    }
-    return false;
-  };
-  rm(S.objs, mesh);
-  if (mesh.parent) mesh.parent.remove(mesh);
-  
-  S.objs.push(...newObjs);
-  selectObject(newObjs[0], false);
-  refreshTree();
-  updateStats();
-  toast('Separated mesh by material');
-  saveHistory();
-}
+function delSel() { if (S.selObjs.length === 0) return; if (S.editMode) editOff(); if (S.poseMode) exitPoseMode(); transform.detach(); S.selObjs.forEach(o => { if (o.isGroup) o.traverse(x => { if (x.userData.helper) scene.remove(x.userData.helper); }); if (o.userData.helper) scene.remove(o.userData.helper); if (o.parent) o.parent.remove(o); if (o.userData.mixer) { S.mixers = S.mixers.filter(m => m !== o.userData.mixer); } if (S.animData[o.uuid]) { delete S.animData[o.uuid]; } const rm = (arr, t) => { let i = arr.indexOf(t); if (i > -1) { arr.splice(i, 1); return true; } for (let j = 0; j < arr.length; j++) { if (arr[j].isGroup && rm(arr[j].children, t)) return true; } return false; }; rm(S.objs, o); }); S.selObjs = []; S.actObj = null; refreshTree(); refreshProps(); updateStats(); saveHistory(); updateTimelineKeyframes(); updateOnionSkin(); }
 
-function delSel() {
-  if (S.selObjs.length === 0) return;
-  if (S.editMode) editOff();
-  if (S.poseMode) exitPoseMode();
-  transform.detach();
-  
-  S.selObjs.forEach(o => {
-    if (o.isGroup) o.traverse(x => { if (x.userData.helper) scene.remove(x.userData.helper); });
-    if (o.userData.helper) scene.remove(o.userData.helper);
-    if (o.parent) o.parent.remove(o);
-    
-    if (o.userData.mixer) {
-      S.mixers = S.mixers.filter(m => m !== o.userData.mixer);
-    }
-    if (S.animData[o.uuid]) {
-      delete S.animData[o.uuid];
-    }
-    
-    const rm = (arr, t) => {
-      let i = arr.indexOf(t);
-      if (i > -1) { arr.splice(i, 1); return true; }
-      for (let j = 0; j < arr.length; j++) {
-        if (arr[j].isGroup && rm(arr[j].children, t)) return true;
-      }
-      return false;
-    };
-    rm(S.objs, o);
-  });
-  
-  S.selObjs = [];
-  S.actObj = null;
-  refreshTree();
-  refreshProps();
-  updateStats();
-  saveHistory();
-  updateTimelineKeyframes();
-  updateOnionSkin();
-}
-
-// --- FIXED CLONING LOGIC FOR GROUPS AND MESHES ---
-function copyObj() {
-  if (S.selObjs.length === 0) { toast('Nothing to copy'); return; }
-  S.clip = S.selObjs.map(o => {
-    // SkeletonUtils.clone properly clones groups, meshes, materials, and skeletons
-    const clone = SkeletonUtils.clone(o);
-    return { clone, name: o.name };
-  });
-  toast('Copied ' + S.clip.length + ' objects');
-}
-
+function copyObj() { if (S.selObjs.length === 0) { toast('Nothing to copy'); return; } S.clip = S.selObjs.map(o => { const clone = SkeletonUtils.clone(o); return { clone, name: o.name }; }); toast('Copied ' + S.clip.length + ' objects'); }
 function pasteObj() {
   if (S.clip.length === 0) { toast('Clipboard is empty'); return; }
   const newObjs = [];
   S.clip.forEach(c => {
-    // Clone the clone so we can paste multiple times
     const n = SkeletonUtils.clone(c.clone);
     n.name = genName(c.name.split('.')[0]);
-    
-    // If "Paste at Original Position" is unchecked, it offsets it
     if (!S.settings.pasteOffset) n.position.add(new THREE.Vector3(1, 1, 0));
+    
+    // FIX: Deep clone materials so pasted objects have their own independent colors
+    n.traverse(child => {
+      if (child.isMesh) {
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map(m => m.clone());
+        } else if (child.material) {
+          child.material = child.material.clone();
+        }
+      }
+    });
     
     scene.add(n);
     S.objs.push(n);
@@ -1040,197 +657,33 @@ function pasteObj() {
   saveHistory();
 }
 
-function addMod(o, t) {
-  if (!o.userData.modifiers) o.userData.modifiers = [];
-  if (!o.userData.baseGeometry) o.userData.baseGeometry = o.geometry.clone();
-  const m = { type: t, param: 0.1 };
-  o.userData.modifiers.push(m);
-  runMods(o);
-  refreshProps();
-  saveHistory();
-}
+function addMod(o, t) { if (!o.userData.modifiers) o.userData.modifiers = []; if (!o.userData.baseGeometry) o.userData.baseGeometry = o.geometry.clone(); const m = { type: t, param: 0.1 }; o.userData.modifiers.push(m); runMods(o); refreshProps(); saveHistory(); }
+function solidify(geom, th) { let g = geom.index ? geom : mergeVertices(geom); g = mergeVertices(g); const p = g.attributes.position; let n = g.attributes.normal; if (!n) g.computeVertexNormals(); const nv = p.count; const em = {}; const idx = g.index.array; for (let i = 0; i < idx.length; i += 3) { const a = idx[i], b = idx[i+1], c = idx[i+2]; const edges = [[a,b], [b,c], [c,a]]; for (const [v1, v2] of edges) { const k = v1 < v2 ? `${v1}_${v2}` : `${v2}_${v1}`; if (!em[k]) em[k] = { v1: Math.min(v1, v2), v2: Math.max(v1, v2) }; } } const np = new Float32Array(nv * 2 * 3); const nn = new Float32Array(nv * 2 * 3); for(let i=0; i<nv; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const nx = n.getX(i), ny = n.getY(i), nz = n.getZ(i); np[i*3] = x; np[i*3+1] = y; np[i*3+2] = z; nn[i*3] = nx; nn[i*3+1] = ny; nn[i*3+2] = nz; np[(nv+i)*3] = x + nx * th; np[(nv+i)*3+1] = y + ny * th; np[(nv+i)*3+2] = z + nz * th; nn[(nv+i)*3] = nx; nn[(nv+i)*3+1] = ny; nn[(nv+i)*3+2] = nz; } const ni = []; for (let i = 0; i < idx.length; i += 3) { const a = idx[i], b = idx[i+1], c = idx[i+2]; ni.push(a, b, c); } for (let i = 0; i < idx.length; i += 3) { const a = idx[i], b = idx[i+1], c = idx[i+2]; ni.push(a + nv, c + nv, b + nv); } for (const k in em) { const e = em[k]; const a = e.v1, b = e.v2; ni.push(a, a + nv, b + nv); ni.push(a, b + nv, b); } const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.BufferAttribute(np, 3)); ng.setAttribute('normal', new THREE.BufferAttribute(nn, 3)); ng.setIndex(ni); ng.computeVertexNormals(); return ng; }
+function runMods(o) { if (!o.userData.baseGeometry) o.userData.baseGeometry = o.geometry.clone(); let g = o.userData.baseGeometry.clone(); if (o.userData.modifiers) { o.userData.modifiers.forEach(m => { if (m.type === 'solidify') { try { g = solidify(g, m.param); } catch(e) {} } }); } o.geometry.dispose(); o.geometry = g; if (o.material) { let m = Array.isArray(o.material) ? o.material[0] : o.material; m.side = THREE.DoubleSide; } const oldOut = o.getObjectByName('__outline__'); if (oldOut) o.remove(oldOut); if (o.isMesh) { const e = new THREE.EdgesGeometry(o.geometry, 30); const out = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color: 0xff8800, depthTest: false, transparent: true })); out.name = '__outline__'; out.renderOrder = 1; out.raycast = () => {}; o.add(out); } updateStats(); }
 
-function solidify(geom, th) {
-  let g = geom.index ? geom : mergeVertices(geom);
-  g = mergeVertices(g);
-  
-  const p = g.attributes.position;
-  let n = g.attributes.normal;
-  if (!n) g.computeVertexNormals();
-  
-  const nv = p.count;
-  const em = {};
-  const idx = g.index.array;
-  for (let i = 0; i < idx.length; i += 3) {
-    const a = idx[i], b = idx[i+1], c = idx[i+2];
-    const edges = [[a,b], [b,c], [c,a]];
-    for (const [v1, v2] of edges) {
-      const k = v1 < v2 ? `${v1}_${v2}` : `${v2}_${v1}`;
-      if (!em[k]) em[k] = { v1: Math.min(v1, v2), v2: Math.max(v1, v2) };
-    }
-  }
-  
-  const np = new Float32Array(nv * 2 * 3);
-  const nn = new Float32Array(nv * 2 * 3);
-  
-  for(let i=0; i<nv; i++) {
-    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-    const nx = n.getX(i), ny = n.getY(i), nz = n.getZ(i);
-    np[i*3] = x; np[i*3+1] = y; np[i*3+2] = z;
-    nn[i*3] = nx; nn[i*3+1] = ny; nn[i*3+2] = nz;
-    np[(nv+i)*3] = x + nx * th;
-    np[(nv+i)*3+1] = y + ny * th;
-    np[(nv+i)*3+2] = z + nz * th;
-    nn[(nv+i)*3] = nx; nn[(nv+i)*3+1] = ny; nn[(nv+i)*3+2] = nz;
-  }
-  
-  const ni = [];
-  for (let i = 0; i < idx.length; i += 3) {
-    const a = idx[i], b = idx[i+1], c = idx[i+2];
-    ni.push(a, b, c);
-  }
-  for (let i = 0; i < idx.length; i += 3) {
-    const a = idx[i], b = idx[i+1], c = idx[i+2];
-    ni.push(a + nv, c + nv, b + nv);
-  }
-  for (const k in em) {
-    const e = em[k];
-    const a = e.v1, b = e.v2;
-    ni.push(a, a + nv, b + nv);
-    ni.push(a, b + nv, b);
-  }
-  
-  const ng = new THREE.BufferGeometry();
-  ng.setAttribute('position', new THREE.BufferAttribute(np, 3));
-  ng.setAttribute('normal', new THREE.BufferAttribute(nn, 3));
-  ng.setIndex(ni);
-  ng.computeVertexNormals();
-  return ng;
-}
-
-function runMods(o) {
-  if (!o.userData.baseGeometry) o.userData.baseGeometry = o.geometry.clone();
-  let g = o.userData.baseGeometry.clone();
-  
-  if (o.userData.modifiers) {
-    o.userData.modifiers.forEach(m => {
-      if (m.type === 'solidify') {
-        try { g = solidify(g, m.param); } catch(e) {}
-      }
-    });
-  }
-  
-  o.geometry.dispose();
-  o.geometry = g;
-  if (o.material) {
-    let m = Array.isArray(o.material) ? o.material[0] : o.material;
-    m.side = THREE.DoubleSide; 
-  }
-  
-  const oldOut = o.getObjectByName('__outline__');
-  if (oldOut) o.remove(oldOut);
-  if (o.isMesh) {
-    const e = new THREE.EdgesGeometry(o.geometry, 30);
-    const out = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color: 0xff8800, depthTest: false, transparent: true }));
-    out.name = '__outline__';
-    out.renderOrder = 1;
-    out.raycast = () => {};
-    o.add(out);
-  }
-  updateStats();
-}
-
-function setupPaint(o) {
-  if (!o.material) return;
-  let m = Array.isArray(o.material) ? o.material[S.actMatIndex || 0] : o.material;
-  if (!m.map || !o.userData.paintCanvas) {
-    let c = document.createElement('canvas');
-    c.width = 512; c.height = 512;
-    let ctx = c.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 512, 512);
-    let tex = new THREE.CanvasTexture(c);
-    m.map = tex;
-    m.needsUpdate = true;
-    o.userData.paintCanvas = c;
-    o.userData.paintCtx = ctx;
-  }
-}
-
-function doPaint(o, uv) {
-  if (!o.userData.paintCtx) setupPaint(o);
-  if (!uv) return; 
-  
-  let ctx = o.userData.paintCtx;
-  let c = o.userData.paintCanvas;
-  let x = uv.x * c.width;
-  let y = (1 - uv.y) * c.height; 
-  ctx.fillStyle = S.paintColor;
-  ctx.beginPath();
-  ctx.arc(x, y, S.brushSize, 0, Math.PI * 2);
-  ctx.fill();
-  
-  if (S.settings.mirrorPaint) {
-    ctx.beginPath();
-    ctx.arc(c.width - x, y, S.brushSize, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  
-  let m = Array.isArray(o.material) ? o.material[S.actMatIndex || 0] : o.material;
-  m.map.needsUpdate = true;
-}
-
-function applyTextureFile(file) {
-  if (S.selObjs.length === 0) {
-    toast('Select a model first');
-    return;
-  }
-  if (!file.type.startsWith('image/')) {
-    toast('File is not an image');
-    return;
-  }
-  const url = URL.createObjectURL(file);
-  new THREE.TextureLoader().load(url, (tex) => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    let count = 0;
-    S.selObjs.forEach(o => {
-      if (o.isMesh) {
-        if (Array.isArray(o.material)) {
-          let matIdx = (o === S.actObj && S.actMatIndex !== undefined) ? S.actMatIndex : 0;
-          if (matIdx < o.material.length && o.material[matIdx]) {
-            o.material[matIdx].map = tex;
-            o.material[matIdx].needsUpdate = true;
-            count++;
-          }
-        } else if (o.material) {
-          o.material.map = tex;
-          o.material.needsUpdate = true;
-          count++;
-        }
-      }
-    });
-    if (count > 0) {
-      toast('Texture applied to ' + count + ' material(s)');
-      refreshProps();
-    } else {
-      toast('No mesh selected');
-    }
-  });
-}
+function setupPaint(o) { if (!o.material) return; let m = Array.isArray(o.material) ? o.material[S.actMatIndex || 0] : o.material; if (!m.map || !o.userData.paintCanvas) { let c = document.createElement('canvas'); c.width = 512; c.height = 512; let ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 512, 512); let tex = new THREE.CanvasTexture(c); m.map = tex; m.needsUpdate = true; o.userData.paintCanvas = c; o.userData.paintCtx = ctx; } }
+function doPaint(o, uv) { if (!o.userData.paintCtx) setupPaint(o); if (!uv) return; let ctx = o.userData.paintCtx; let c = o.userData.paintCanvas; let x = uv.x * c.width; let y = (1 - uv.y) * c.height; ctx.fillStyle = S.paintColor; ctx.beginPath(); ctx.arc(x, y, S.brushSize, 0, Math.PI * 2); ctx.fill(); if (S.settings.mirrorPaint) { ctx.beginPath(); ctx.arc(c.width - x, y, S.brushSize, 0, Math.PI * 2); ctx.fill(); } let m = Array.isArray(o.material) ? o.material[S.actMatIndex || 0] : o.material; m.map.needsUpdate = true; }
+function applyTextureFile(file) { if (S.selObjs.length === 0) { toast('Select a model first'); return; } if (!file.type.startsWith('image/')) { toast('File is not an image'); return; } const url = URL.createObjectURL(file); new THREE.TextureLoader().load(url, (tex) => { tex.colorSpace = THREE.SRGBColorSpace; let count = 0; S.selObjs.forEach(o => { if (o.isMesh) { if (Array.isArray(o.material)) { let matIdx = (o === S.actObj && S.actMatIndex !== undefined) ? S.actMatIndex : 0; if (matIdx < o.material.length && o.material[matIdx]) { o.material[matIdx].map = tex; o.material[matIdx].needsUpdate = true; count++; } } else if (o.material) { o.material.map = tex; o.material.needsUpdate = true; count++; } } }); if (count > 0) { toast('Texture applied to ' + count + ' material(s)'); refreshProps(); } else { toast('No mesh selected'); } }); }
 
 function editOn() {
-  if (!S.actObj || !S.actObj.isMesh) { toast('Edit Mode requires a single mesh object'); return; }
+  if (!S.actObj) { toast('Select an object first'); return; }
+  
+  let target = S.actObj;
+  // FIX: If a group/camera is selected, find the first mesh inside it
+  if (!target.isMesh) {
+    let foundMesh = null;
+    target.traverse(o => { if (!foundMesh && o.isMesh) foundMesh = o; });
+    if (foundMesh) { selectObject(foundMesh, false); target = foundMesh; } 
+    else { toast('Edit Mode requires a mesh object'); return; }
+  }
+
   if (S.poseMode) exitPoseMode();
   S.editMode = true;
   transform.detach();
-  S.selObjs = [S.actObj];
-  const o = S.actObj;
+  S.selObjs = [target];
+  const o = target;
   
-  try {
-    const m = mergeVertices(o.geometry);
-    o.geometry.dispose();
-    o.geometry = m;
-  } catch(e) {}
+  try { const m = mergeVertices(o.geometry); o.geometry.dispose(); o.geometry = m; } catch(e) {}
   
   o.updateMatrixWorld(true);
   const p = o.geometry.attributes.position;
@@ -1241,11 +694,8 @@ function editOn() {
     const lp = new THREE.Vector3(p.getX(i), p.getY(i), p.getZ(i));
     const wp = lp.clone().applyMatrix4(o.matrixWorld);
     const s = new THREE.Mesh(hg, new THREE.MeshBasicMaterial({ color: 0xffaa33, depthTest: false, transparent: true }));
-    s.position.copy(wp);
-    s.renderOrder = 999;
-    s.userData.vertexIndex = i;
-    scene.add(s);
-    S.vertHelpers.push(s);
+    s.position.copy(wp); s.renderOrder = 999; s.userData.vertexIndex = i;
+    scene.add(s); S.vertHelpers.push(s);
   }
   
   const out = o.getObjectByName('__outline__');
@@ -1254,101 +704,13 @@ function editOn() {
   document.querySelectorAll('.vmode').forEach(b => b.classList.toggle('active', b.dataset.mode === 'edit'));
 }
 
-function editOff() {
-  if (!S.editMode) return;
-  S.editMode = false;
-  S.vertHelpers.forEach(h => scene.remove(h));
-  S.vertHelpers = [];
-  S.selVert = null;
-  transform.detach();
-  
-  if (S.actObj) {
-    const out = S.actObj.getObjectByName('__outline__');
-    if (out) out.visible = true;
-    transform.attach(S.actObj);
-  }
-  document.getElementById('m-name').textContent = 'Object Mode';
-  document.querySelectorAll('.vmode').forEach(b => b.classList.toggle('active', b.dataset.mode === 'object'));
-  saveHistory();
-}
+function editOff() { if (!S.editMode) return; S.editMode = false; S.vertHelpers.forEach(h => scene.remove(h)); S.vertHelpers = []; S.selVert = null; transform.detach(); if (S.actObj) { const out = S.actObj.getObjectByName('__outline__'); if (out) out.visible = true; transform.attach(S.actObj); } document.getElementById('m-name').textContent = 'Object Mode'; document.querySelectorAll('.vmode').forEach(b => b.classList.toggle('active', b.dataset.mode === 'object')); saveHistory(); }
 
-function enterPoseMode() {
-  if (!S.actObj) { toast('Select a rigged mesh first'); return; }
-  if (S.editMode) editOff();
+function enterPoseMode() { if (!S.actObj) { toast('Select a rigged mesh first'); return; } if (S.editMode) editOff(); let skinnedMesh = null; if (S.actObj.isSkinnedMesh) skinnedMesh = S.actObj; else S.actObj.traverse(o => { if (o.isSkinnedMesh) skinnedMesh = o; }); if (!skinnedMesh || !skinnedMesh.skeleton) { toast('No skeleton found in selection'); return; } S.poseMode = true; S.skinnedMesh = skinnedMesh; transform.detach(); const helper = new THREE.SkeletonHelper(skinnedMesh); helper.material.linewidth = 2; helper.name = '__skeleton_helper__'; helper.raycast = () => {}; scene.add(helper); S.boneHelpers = []; const sphereGeom = new THREE.SphereGeometry(0.1, 8, 8); skinnedMesh.skeleton.bones.forEach(bone => { const sphere = new THREE.Mesh(sphereGeom, new THREE.MeshBasicMaterial({ color: 0x00ff00, depthTest: false, transparent: true })); sphere.renderOrder = 999; sphere.userData.bone = bone; scene.add(sphere); S.boneHelpers.push(sphere); }); const out = skinnedMesh.getObjectByName('__outline__'); if (out) out.visible = false; document.getElementById('m-name').textContent = 'Pose Mode'; document.querySelectorAll('.vmode').forEach(b => b.classList.toggle('active', b.dataset.mode === 'pose')); toast('Pose Mode: Click green dots to pose bones'); }
+function exitPoseMode() { if (!S.poseMode) return; S.poseMode = false; S.boneHelpers.forEach(h => scene.remove(h)); S.boneHelpers = []; const helper = scene.getObjectByName('__skeleton_helper__'); if (helper) scene.remove(helper); S.actBone = null; transform.detach(); if (S.skinnedMesh) { const out = S.skinnedMesh.getObjectByName('__outline__'); if (out) out.visible = true; S.skinnedMesh = null; } if (S.actObj) transform.attach(S.actObj); document.getElementById('m-name').textContent = 'Object Mode'; document.querySelectorAll('.vmode').forEach(b => b.classList.toggle('active', b.dataset.mode === 'object')); saveHistory(); }
 
-  let skinnedMesh = null;
-  if (S.actObj.isSkinnedMesh) skinnedMesh = S.actObj;
-  else S.actObj.traverse(o => { if (o.isSkinnedMesh) skinnedMesh = o; });
-
-  if (!skinnedMesh || !skinnedMesh.skeleton) { toast('No skeleton found in selection'); return; }
-
-  S.poseMode = true;
-  S.skinnedMesh = skinnedMesh;
-  transform.detach();
-
-  const helper = new THREE.SkeletonHelper(skinnedMesh);
-  helper.material.linewidth = 2;
-  helper.name = '__skeleton_helper__';
-  helper.raycast = () => {};
-  scene.add(helper);
-
-  S.boneHelpers = [];
-  const sphereGeom = new THREE.SphereGeometry(0.1, 8, 8);
-  skinnedMesh.skeleton.bones.forEach(bone => {
-    const sphere = new THREE.Mesh(sphereGeom, new THREE.MeshBasicMaterial({ color: 0x00ff00, depthTest: false, transparent: true }));
-    sphere.renderOrder = 999;
-    sphere.userData.bone = bone;
-    scene.add(sphere);
-    S.boneHelpers.push(sphere);
-  });
-
-  const out = skinnedMesh.getObjectByName('__outline__');
-  if (out) out.visible = false;
-  document.getElementById('m-name').textContent = 'Pose Mode';
-  document.querySelectorAll('.vmode').forEach(b => b.classList.toggle('active', b.dataset.mode === 'pose'));
-  toast('Pose Mode: Click green dots to pose bones');
-}
-
-function exitPoseMode() {
-  if (!S.poseMode) return;
-  S.poseMode = false;
-  S.boneHelpers.forEach(h => scene.remove(h));
-  S.boneHelpers = [];
-  const helper = scene.getObjectByName('__skeleton_helper__');
-  if (helper) scene.remove(helper);
-  
-  S.actBone = null;
-  transform.detach();
-  
-  if (S.skinnedMesh) {
-    const out = S.skinnedMesh.getObjectByName('__outline__');
-    if (out) out.visible = true;
-    S.skinnedMesh = null;
-  }
-  if (S.actObj) transform.attach(S.actObj);
-  
-  document.getElementById('m-name').textContent = 'Object Mode';
-  document.querySelectorAll('.vmode').forEach(b => b.classList.toggle('active', b.dataset.mode === 'object'));
-  saveHistory();
-}
-
-function selVert(h) {
-  S.vertHelpers.forEach(x => x.material.color.setHex(0xffaa33));
-  h.material.color.setHex(0xffffff);
-  S.selVert = h;
-  transform.attach(h);
-}
-
-function syncVert() {
-  if (!S.selVert || !S.actObj) return;
-  const i = S.selVert.userData.vertexIndex;
-  const o = S.actObj;
-  const lp = S.selVert.position.clone();
-  o.worldToLocal(lp);
-  o.geometry.attributes.position.setXYZ(i, lp.x, lp.y, lp.z);
-  o.geometry.attributes.position.needsUpdate = true;
-  o.geometry.computeVertexNormals();
-}
+function selVert(h) { S.vertHelpers.forEach(x => x.material.color.setHex(0xffaa33)); h.material.color.setHex(0xffffff); S.selVert = h; transform.attach(h); }
+function syncVert() { if (!S.selVert || !S.actObj) return; const i = S.selVert.userData.vertexIndex; const o = S.actObj; const lp = S.selVert.position.clone(); o.worldToLocal(lp); o.geometry.attributes.position.setXYZ(i, lp.x, lp.y, lp.z); o.geometry.attributes.position.needsUpdate = true; o.geometry.computeVertexNormals(); }
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -1362,14 +724,7 @@ canvas.addEventListener('pointerdown', e => {
   
   if (S.poseMode && S.skinnedMesh) {
     const its = raycaster.intersectObjects(S.boneHelpers, false);
-    if (its.length > 0) {
-      S.actBone = its[0].object.userData.bone;
-      S.boneHelpers.forEach(h => h.material.color.setHex(0x00ff00));
-      its[0].object.material.color.setHex(0xff0000);
-      transform.attach(S.actBone);
-      transform.setMode('rotate');
-      return;
-    }
+    if (its.length > 0) { S.actBone = its[0].object.userData.bone; S.boneHelpers.forEach(h => h.material.color.setHex(0x00ff00)); its[0].object.material.color.setHex(0xff0000); transform.attach(S.actBone); transform.setMode('rotate'); return; }
   } else if (S.editMode && S.actObj) {
     const its = raycaster.intersectObjects(S.vertHelpers, false);
     if (its.length > 0) { selVert(its[0].object); return; }
@@ -1377,70 +732,26 @@ canvas.addEventListener('pointerdown', e => {
     if (!S.actObj || !S.actObj.isMesh) return;
     S.painting = true;
     const its = raycaster.intersectObject(S.actObj);
-    if (its.length > 0 && its[0].uv) {
-      if (its[0].face && Array.isArray(S.actObj.material)) {
-        S.actMatIndex = its[0].face.materialIndex;
-      }
-      doPaint(S.actObj, its[0].uv);
-    }
+    if (its.length > 0 && its[0].uv) { if (its[0].face && Array.isArray(S.actObj.material)) { S.actMatIndex = its[0].face.materialIndex; } doPaint(S.actObj, its[0].uv); }
   } else {
     const its = raycaster.intersectObjects(S.objs, true);
     if (its.length > 0) {
       if (e.altKey) {
         const cycleList = [];
-        const addObjToList = (obj) => {
-          if (obj && !cycleList.includes(obj) && obj !== scene && 
-              obj.name !== '__helper__' && obj.name !== '__outline__' && 
-              obj.name !== '__skeleton_helper__' && !obj.name.startsWith('__bone_sphere__')) {
-            cycleList.push(obj);
-          }
-        };
-
-        its.forEach(it => {
-          let obj = it.object;
-          if (obj.light) obj = obj.light;
-          
-          addObjToList(obj);
-          let parent = obj.parent;
-          while (parent && parent !== scene) {
-            addObjToList(parent);
-            parent = parent.parent;
-          }
-        });
-
+        const addObjToList = (obj) => { if (obj && !cycleList.includes(obj) && obj !== scene && obj.name !== '__helper__' && obj.name !== '__outline__' && obj.name !== '__skeleton_helper__' && !obj.name.startsWith('__bone_sphere__')) { cycleList.push(obj); } };
+        its.forEach(it => { let obj = it.object; if (obj.light) obj = obj.light; addObjToList(obj); let parent = obj.parent; while (parent && parent !== scene) { addObjToList(parent); parent = parent.parent; } });
         let currentIdx = cycleList.indexOf(S.actObj);
         let nextIdx = (currentIdx + 1) % cycleList.length;
         let nextObj = cycleList[nextIdx];
-        
         selectObject(nextObj, e.shiftKey);
-        
-        if (nextObj.isMesh) {
-          const faceHit = its.find(i => i.object === nextObj || i.object.light === nextObj);
-          if (faceHit && faceHit.face && Array.isArray(nextObj.material) && nextObj.material.length > 1) {
-            S.actMatIndex = faceHit.face.materialIndex;
-            toast('Active material set to index ' + S.actMatIndex);
-            refreshProps();
-          }
-        }
+        if (nextObj.isMesh) { const faceHit = its.find(i => i.object === nextObj || i.object.light === nextObj); if (faceHit && faceHit.face && Array.isArray(nextObj.material) && nextObj.material.length > 1) { S.actMatIndex = faceHit.face.materialIndex; toast('Active material set to index ' + S.actMatIndex); refreshProps(); } }
       } else {
-        let hit = its[0].object;
-        if (hit.light) hit = hit.light; 
-        
+        let hit = its[0].object; if (hit.light) hit = hit.light; 
         let topObj = hit;
-        while (topObj.parent && !S.objs.includes(topObj)) {
-          topObj = topObj.parent;
-        }
-        if (S.objs.includes(topObj)) {
-          selectObject(topObj, e.shiftKey);
-        } else {
-          selectObject(hit, e.shiftKey);
-        }
+        while (topObj.parent && !S.objs.includes(topObj)) { topObj = topObj.parent; }
+        if (S.objs.includes(topObj)) { selectObject(topObj, e.shiftKey); } else { selectObject(hit, e.shiftKey); }
       }
-    } else {
-      if (!e.shiftKey) {
-        selectObject(null, false);
-      }
-    }
+    } else { if (!e.shiftKey) { selectObject(null, false); } }
   }
 });
 
@@ -1467,19 +778,8 @@ canvas.addEventListener('contextmenu', e => {
   const its = raycaster.intersectObjects(S.objs, true);
   if (its.length > 0) {
     let hit = its[0].object;
-    if (e.altKey) {
-      selectObject(hit, e.shiftKey);
-    } else {
-      let topObj = hit;
-      while (topObj.parent && !S.objs.includes(topObj)) {
-        topObj = topObj.parent;
-      }
-      if (S.objs.includes(topObj)) {
-        selectObject(topObj, e.shiftKey);
-      } else {
-        selectObject(hit, e.shiftKey);
-      }
-    }
+    if (e.altKey) { selectObject(hit, e.shiftKey); } 
+    else { let topObj = hit; while (topObj.parent && !S.objs.includes(topObj)) { topObj = topObj.parent; } if (S.objs.includes(topObj)) { selectObject(topObj, e.shiftKey); } else { selectObject(hit, e.shiftKey); } }
   }
   if (S.actObj && S.actObj.geometry) showPopup(e.clientX, e.clientY, getCtxItems());
 });
@@ -1488,12 +788,7 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   const k = e.key.toLowerCase();
   
-  if (e.shiftKey && k === 'a') {
-    e.preventDefault();
-    const r = canvas.getBoundingClientRect();
-    showPopup(r.left + r.width/2, r.top + r.height/2, getAddItems());
-    return;
-  }
+  if (e.shiftKey && k === 'a') { e.preventDefault(); const r = canvas.getBoundingClientRect(); showPopup(r.left + r.width/2, r.top + r.height/2, getAddItems()); return; }
   if (e.ctrlKey && k === 'a') { e.preventDefault(); selectObject(null, false); return; }
   if (e.ctrlKey && k === 'c') { e.preventDefault(); copyObj(); return; }
   if (e.ctrlKey && k === 'v') { e.preventDefault(); pasteObj(); return; }
@@ -1509,30 +804,14 @@ document.addEventListener('keydown', e => {
     case 'r': setTool('rotate'); break;
     case 's': setTool('scale'); break;
     case 'x': case 'delete':
-      if (S.selectedKeyframe !== null) {
-        deleteSelectedKeyframe();
-      } else if (S.editMode && S.selVert) { 
-        S.selVert = null; transform.detach(); 
-      } else { 
-        delSel(); 
-      }
+      if (S.selectedKeyframe !== null) { deleteSelectedKeyframe(); } 
+      else if (S.editMode && S.selVert) { S.selVert = null; transform.detach(); } 
+      else { delSel(); }
       break;
-    case 'tab':
-      e.preventDefault();
-      if (S.editMode) editOff(); else editOn();
-      break;
-    case 'a':
-      if (S.objs.length > 0) {
-        const i = S.objs.indexOf(S.actObj);
-        selectObject(S.objs[(i + 1) % S.objs.length], false);
-      }
-      break;
-    case 'z':
-      toggleShade(S.shading === 'solid' ? 'wireframe' : 'solid');
-      break;
-    case 'home':
-      frameAll();
-      break;
+    case 'tab': e.preventDefault(); if (S.editMode) editOff(); else editOn(); break;
+    case 'a': if (S.objs.length > 0) { const i = S.objs.indexOf(S.actObj); selectObject(S.objs[(i + 1) % S.objs.length], false); } break;
+    case 'z': toggleShade(S.shading === 'solid' ? 'wireframe' : 'solid'); break;
+    case 'home': frameAll(); break;
   }
   
   if (e.code === 'Numpad1') { e.preventDefault(); setView('front'); }
@@ -1540,339 +819,27 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Numpad7') { e.preventDefault(); setView('top'); }
 });
 
-function setView(v) {
-  const d = camera.position.distanceTo(orbit.target);
-  const t = orbit.target.clone();
-  if (v === 'front') camera.position.set(t.x, t.y - d, t.z);
-  if (v === 'right') camera.position.set(t.x + d, t.y, t.z);
-  if (v === 'top') camera.position.set(t.x, t.y, t.z + d);
-  camera.lookAt(t);
-  orbit.update();
-}
+function setView(v) { const d = camera.position.distanceTo(orbit.target); const t = orbit.target.clone(); if (v === 'front') camera.position.set(t.x, t.y - d, t.z); if (v === 'right') camera.position.set(t.x + d, t.y, t.z); if (v === 'top') camera.position.set(t.x, t.y, t.z + d); camera.lookAt(t); orbit.update(); }
+function setTool(t) { S.tool = t; document.querySelectorAll('.tbtn').forEach(b => b.classList.toggle('active', b.dataset.t === t)); document.getElementById('t-name').textContent = t.charAt(0).toUpperCase() + t.slice(1); if (S.actObj && !S.editMode && !S.poseMode) { if (t === 'paint') { transform.detach(); if (S.actObj.isMesh) setupPaint(S.actObj); } else { transform.attach(S.actObj); if (t === 'move') transform.setMode('translate'); else if (t === 'rotate') transform.setMode('rotate'); else if (t === 'scale') transform.setMode('scale'); } } }
+function toggleShade(m) { S.shading = m; document.querySelectorAll('.sbtn').forEach(b => b.classList.toggle('active', b.dataset.shade === m)); S.objs.forEach(o => { if (o.material) { let mat = Array.isArray(o.material) ? o.material[0] : o.material; if (mat.wireframe !== undefined) mat.wireframe = (m === 'wireframe'); } if (o.isGroup) o.traverse(x => { if (x.material) { let mat = Array.isArray(x.material) ? x.material[0] : x.material; if (mat.wireframe !== undefined) mat.wireframe = (m === 'wireframe'); } }); }); }
 
-function setTool(t) {
-  S.tool = t;
-  document.querySelectorAll('.tbtn').forEach(b => b.classList.toggle('active', b.dataset.t === t));
-  document.getElementById('t-name').textContent = t.charAt(0).toUpperCase() + t.slice(1);
-  if (S.actObj && !S.editMode && !S.poseMode) {
-    if (t === 'paint') {
-      transform.detach();
-      if (S.actObj.isMesh) setupPaint(S.actObj);
-    } else {
-      transform.attach(S.actObj);
-      if (t === 'move') transform.setMode('translate');
-      else if (t === 'rotate') transform.setMode('rotate');
-      else if (t === 'scale') transform.setMode('scale');
-    }
-  }
-}
+function showPopup(x, y, items) { document.querySelectorAll('.popup').forEach(m => m.remove()); const menu = document.createElement('div'); menu.className = 'popup'; menu.style.left = x + 'px'; menu.style.top = y + 'px'; items.forEach(item => { if (item.separator) { menu.appendChild(document.createElement('div')).className = 'p-sep'; return; } const d = document.createElement('div'); d.className = 'p-item' + (item.disabled ? ' disabled' : ''); d.innerHTML = `<span>${item.label}</span>` + (item.shortcut ? `<span class="p-short">${item.shortcut}</span>` : '') + (item.submenu ? '<span class="p-sub-arrow">▸</span>' : ''); if (item.submenu) { d.addEventListener('mouseenter', () => { document.querySelectorAll('.p-sub').forEach(s => s.remove()); const sub = document.createElement('div'); sub.className = 'p-sub'; item.submenu.forEach(si => { if (si.separator) { sub.appendChild(document.createElement('div')).className = 'p-sep'; return; } const sd = document.createElement('div'); sd.className = 'p-item'; sd.innerHTML = `<span>${si.label}</span>`; if (si.action) sd.addEventListener('click', () => { si.action(); menu.remove(); }); sub.appendChild(sd); }); d.appendChild(sub); }); } else if (item.action && !item.disabled) { d.addEventListener('click', () => { item.action(); menu.remove(); }); } menu.appendChild(d); }); document.body.appendChild(menu); setTimeout(() => document.addEventListener('click', () => menu.remove(), { once: true }), 0); }
+function getAddItems() { return [ { label: 'Mesh', submenu: [ { label: 'Cube', action: () => addObj('Cube') }, { label: 'UV Sphere', action: () => addObj('UV Sphere') }, { label: 'Ico Sphere', action: () => addObj('Ico Sphere') }, { label: 'Cylinder', action: () => addObj('Cylinder') }, { label: 'Cone', action: () => addObj('Cone') }, { label: 'Torus', action: () => addObj('Torus') }, { label: 'Plane', action: () => addObj('Plane') }, ]}, { separator: true }, { label: 'Camera', action: addCam }, { label: 'Light', submenu: [ { label: 'Point', action: () => addLight('Point') }, { label: 'Sun', action: () => addLight('Sun') }, ]}, ]; }
+function getCtxItems() { let items = [ { label: 'Shade Smooth', action: () => shadeMode(false) }, { label: 'Shade Flat', action: () => shadeMode(true) }, { separator: true }, { label: 'Group', action: groupSel, shortcut: 'Ctrl+G' }, { separator: true }, { label: 'Duplicate', action: pasteObj, shortcut: 'Ctrl+V' }, { label: 'Copy', action: copyObj, shortcut: 'Ctrl+C' }, { label: 'Delete', action: delSel, shortcut: 'X' }, ]; if (S.actObj && S.actObj.isGroup) { items.splice(5, 0, { label: 'Ungroup', action: () => ungroup(S.actObj) }); } if (S.actObj && S.actObj.isMesh && S.actObj.geometry && S.actObj.geometry.groups && S.actObj.geometry.groups.length > 1) { items.splice(1, 0, { label: 'Separate by Material', action: () => separateByMaterial(S.actObj) }); } return items; }
+function getTreeCtxItems(o) { let items = []; if (o && o.isGroup) { items.push({ label: 'Ungroup', action: () => ungroup(o) }); items.push({ separator: true }); } if (o && o.isMesh && o.geometry && o.geometry.groups && o.geometry.groups.length > 1) { items.push({ label: 'Separate by Material', action: () => separateByMaterial(o) }); items.push({ separator: true }); } if (S.selObjs.length > 1) { items.push({ label: 'Group Selected', action: groupSel, shortcut: 'Ctrl+G' }); items.push({ separator: true }); } items.push({ label: 'Delete', action: delSel, shortcut: 'X' }); return items; }
+function shadeMode(f) { S.selObjs.forEach(o => { if (o.geometry && o.material) { let m = Array.isArray(o.material) ? o.material[0] : o.material; o.geometry.computeVertexNormals(); m.flatShading = f; m.needsUpdate = true; } }); toast(f ? 'Shade Flat' : 'Shade Smooth'); saveHistory(); }
 
-function toggleShade(m) {
-  S.shading = m;
-  document.querySelectorAll('.sbtn').forEach(b => b.classList.toggle('active', b.dataset.shade === m));
-  S.objs.forEach(o => { 
-    if (o.material) {
-      let mat = Array.isArray(o.material) ? o.material[0] : o.material;
-      if (mat.wireframe !== undefined) mat.wireframe = (m === 'wireframe');
-    }
-    if (o.isGroup) o.traverse(x => { 
-      if (x.material) {
-        let mat = Array.isArray(x.material) ? x.material[0] : x.material;
-        if (mat.wireframe !== undefined) mat.wireframe = (m === 'wireframe');
-      }
-    });
-  });
-}
-
-function showPopup(x, y, items) {
-  document.querySelectorAll('.popup').forEach(m => m.remove());
-  const menu = document.createElement('div');
-  menu.className = 'popup';
-  menu.style.left = x + 'px';
-  menu.style.top = y + 'px';
-  
-  items.forEach(item => {
-    if (item.separator) { menu.appendChild(document.createElement('div')).className = 'p-sep'; return; }
-    const d = document.createElement('div');
-    d.className = 'p-item' + (item.disabled ? ' disabled' : '');
-    d.innerHTML = `<span>${item.label}</span>` + 
-      (item.shortcut ? `<span class="p-short">${item.shortcut}</span>` : '') +
-      (item.submenu ? '<span class="p-sub-arrow">▸</span>' : '');
-    if (item.submenu) {
-      d.addEventListener('mouseenter', () => {
-        document.querySelectorAll('.p-sub').forEach(s => s.remove());
-        const sub = document.createElement('div');
-        sub.className = 'p-sub';
-        item.submenu.forEach(si => {
-          if (si.separator) { sub.appendChild(document.createElement('div')).className = 'p-sep'; return; }
-          const sd = document.createElement('div');
-          sd.className = 'p-item';
-          sd.innerHTML = `<span>${si.label}</span>`;
-          if (si.action) sd.addEventListener('click', () => { si.action(); menu.remove(); });
-          sub.appendChild(sd);
-        });
-        d.appendChild(sub);
-      });
-    } else if (item.action && !item.disabled) {
-      d.addEventListener('click', () => { item.action(); menu.remove(); });
-    }
-    menu.appendChild(d);
-  });
-  document.body.appendChild(menu);
-  setTimeout(() => document.addEventListener('click', () => menu.remove(), { once: true }), 0);
-}
-
-function getAddItems() {
-  return [
-    { label: 'Mesh', submenu: [
-      { label: 'Cube', action: () => addObj('Cube') },
-      { label: 'UV Sphere', action: () => addObj('UV Sphere') },
-      { label: 'Ico Sphere', action: () => addObj('Ico Sphere') },
-      { label: 'Cylinder', action: () => addObj('Cylinder') },
-      { label: 'Cone', action: () => addObj('Cone') },
-      { label: 'Torus', action: () => addObj('Torus') },
-      { label: 'Plane', action: () => addObj('Plane') },
-    ]},
-    { separator: true },
-    { label: 'Camera', action: addCam },
-    { label: 'Light', submenu: [
-      { label: 'Point', action: () => addLight('Point') },
-      { label: 'Sun', action: () => addLight('Sun') },
-    ]},
-  ];
-}
-
-function getCtxItems() {
-  let items = [
-    { label: 'Shade Smooth', action: () => shadeMode(false) },
-    { label: 'Shade Flat', action: () => shadeMode(true) },
-    { separator: true },
-    { label: 'Group', action: groupSel, shortcut: 'Ctrl+G' },
-    { separator: true },
-    { label: 'Duplicate', action: pasteObj, shortcut: 'Ctrl+V' },
-    { label: 'Copy', action: copyObj, shortcut: 'Ctrl+C' },
-    { label: 'Delete', action: delSel, shortcut: 'X' },
-  ];
-  if (S.actObj && S.actObj.isGroup) {
-    items.splice(5, 0, { label: 'Ungroup', action: () => ungroup(S.actObj) });
-  }
-  if (S.actObj && S.actObj.isMesh && S.actObj.geometry && S.actObj.geometry.groups && S.actObj.geometry.groups.length > 1) {
-    items.splice(1, 0, { label: 'Separate by Material', action: () => separateByMaterial(S.actObj) });
-  }
-  return items;
-}
-
-function getTreeCtxItems(o) {
-  let items = [];
-  if (o && o.isGroup) {
-    items.push({ label: 'Ungroup', action: () => ungroup(o) });
-    items.push({ separator: true });
-  }
-  if (o && o.isMesh && o.geometry && o.geometry.groups && o.geometry.groups.length > 1) {
-    items.push({ label: 'Separate by Material', action: () => separateByMaterial(o) });
-    items.push({ separator: true });
-  }
-  if (S.selObjs.length > 1) {
-    items.push({ label: 'Group Selected', action: groupSel, shortcut: 'Ctrl+G' });
-    items.push({ separator: true });
-  }
-  items.push({ label: 'Delete', action: delSel, shortcut: 'X' });
-  return items;
-}
-
-function shadeMode(f) {
-  S.selObjs.forEach(o => {
-    if (o.geometry && o.material) {
-      let m = Array.isArray(o.material) ? o.material[0] : o.material;
-      o.geometry.computeVertexNormals();
-      m.flatShading = f;
-      m.needsUpdate = true;
-    }
-  });
-  toast(f ? 'Shade Flat' : 'Shade Smooth');
-  saveHistory();
-}
-
-function handleFileDrop(file) {
-  const reader = new FileReader();
-  const ext = file.name.split('.').pop().toLowerCase();
-  
-  if (ext === 'obj') {
-    reader.readAsText(file);
-    reader.onload = (e) => {
-      const loader = new OBJLoader();
-      const obj = loader.parse(e.target.result);
-      obj.name = genName(file.name.replace('.obj', ''));
-      obj.traverse(c => {
-        if (c.isMesh) {
-          if(!c.material) c.material = new THREE.MeshPhongMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
-          c.castShadow = true;
-          c.receiveShadow = true;
-        }
-      });
-      scene.add(obj);
-      S.objs.push(obj);
-      selectObject(obj, false);
-      refreshTree();
-      toast('Imported OBJ: ' + file.name);
-      saveHistory();
-    };
-  } else if (ext === 'gltf' || ext === 'glb') {
-    reader.readAsArrayBuffer(file);
-    reader.onload = (e) => {
-      const loader = new GLTFLoader();
-      loader.parse(e.target.result, '', (gltf) => {
-        const obj = gltf.scene;
-        obj.name = genName(file.name.replace(/\.(gltf|glb)$/, ''));
-        obj.traverse(c => {
-          if (c.isMesh) {
-            c.castShadow = true; c.receiveShadow = true;
-          }
-        });
-        
-        if (gltf.animations && gltf.animations.length > 0) {
-          const mixer = new THREE.AnimationMixer(obj);
-          S.mixers.push(mixer);
-          obj.userData.mixer = mixer;
-          obj.userData.animations = gltf.animations;
-          const action = mixer.clipAction(gltf.animations[0]);
-          action.play();
-          action.paused = true; 
-        }
-        
-        scene.add(obj);
-        S.objs.push(obj);
-        selectObject(obj, false);
-        refreshTree();
-        toast(`Imported ${ext.toUpperCase()}: ` + file.name);
-        saveHistory();
-      });
-    };
-  } else if (ext === 'fbx') {
-    reader.readAsArrayBuffer(file);
-    reader.onload = (e) => {
-      const loader = new FBXLoader();
-      const obj = loader.parse(e.target.result, '');
-      obj.name = genName(file.name.replace('.fbx', ''));
-      obj.traverse(c => {
-        if (c.isMesh) {
-          c.castShadow = true; c.receiveShadow = true;
-        }
-      });
-      
-      if (obj.animations && obj.animations.length > 0) {
-        const mixer = new THREE.AnimationMixer(obj);
-        S.mixers.push(mixer);
-        obj.userData.mixer = mixer;
-        obj.userData.animations = obj.animations;
-        const action = mixer.clipAction(obj.animations[0]);
-        action.play();
-        action.paused = true; 
-      }
-      
-      scene.add(obj);
-      S.objs.push(obj);
-      selectObject(obj, false);
-      refreshTree();
-      toast(`Imported FBX: ` + file.name);
-      saveHistory();
-    };
-  } else {
-    toast('Unsupported file type. Please use .obj, .gltf, or .fbx');
-  }
-}
-
-function exportScene(format) {
-  if (S.selObjs.length === 0) { toast('Select an object to export'); return; }
-  const o = S.actObj;
-  if (format === 'obj') {
-    const exp = new OBJExporter();
-    const data = exp.parse(o);
-    const blob = new Blob([data], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = (o.name || 'scene') + '.obj';
-    link.click();
-    toast('Exported OBJ');
-  } else if (format === 'gltf') {
-    const exp = new GLTFExporter();
-    exp.parse(o, (result) => {
-      const data = JSON.stringify(result, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = (o.name || 'scene') + '.gltf';
-      link.click();
-      toast('Exported GLTF');
-    });
-  } else if (format === 'glb') {
-    const exp = new GLTFExporter();
-    exp.parse(o, (result) => {
-      const blob = new Blob([result], { type: 'application/octet-stream' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = (o.name || 'scene') + '.glb';
-      link.click();
-      toast('Exported GLB');
-    }, { binary: true });
-  }
-}
+function handleFileDrop(file) { const reader = new FileReader(); const ext = file.name.split('.').pop().toLowerCase(); if (ext === 'obj') { reader.readAsText(file); reader.onload = (e) => { const loader = new OBJLoader(); const obj = loader.parse(e.target.result); obj.name = genName(file.name.replace('.obj', '')); obj.traverse(c => { if (c.isMesh) { if(!c.material) c.material = new THREE.MeshPhongMaterial({ color: 0xcccccc, side: THREE.DoubleSide }); c.castShadow = true; c.receiveShadow = true; } }); scene.add(obj); S.objs.push(obj); selectObject(obj, false); refreshTree(); toast('Imported OBJ: ' + file.name); saveHistory(); }; } else if (ext === 'gltf' || ext === 'glb') { reader.readAsArrayBuffer(file); reader.onload = (e) => { const loader = new GLTFLoader(); loader.parse(e.target.result, '', (gltf) => { const obj = gltf.scene; obj.name = genName(file.name.replace(/\.(gltf|glb)$/, '')); obj.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); if (gltf.animations && gltf.animations.length > 0) { const mixer = new THREE.AnimationMixer(obj); S.mixers.push(mixer); obj.userData.mixer = mixer; obj.userData.animations = gltf.animations; const action = mixer.clipAction(gltf.animations[0]); action.play(); action.paused = true; } scene.add(obj); S.objs.push(obj); selectObject(obj, false); refreshTree(); toast(`Imported ${ext.toUpperCase()}: ` + file.name); saveHistory(); }); }; } else if (ext === 'fbx') { reader.readAsArrayBuffer(file); reader.onload = (e) => { const loader = new FBXLoader(); const obj = loader.parse(e.target.result, ''); obj.name = genName(file.name.replace('.fbx', '')); obj.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); if (obj.animations && obj.animations.length > 0) { const mixer = new THREE.AnimationMixer(obj); S.mixers.push(mixer); obj.userData.mixer = mixer; obj.userData.animations = obj.animations; const action = mixer.clipAction(obj.animations[0]); action.play(); action.paused = true; } scene.add(obj); S.objs.push(obj); selectObject(obj, false); refreshTree(); toast(`Imported FBX: ` + file.name); saveHistory(); }; } else { toast('Unsupported file type. Please use .obj, .gltf, or .fbx'); } }
+function exportScene(format) { if (S.selObjs.length === 0) { toast('Select an object to export'); return; } const o = S.actObj; if (format === 'obj') { const exp = new OBJExporter(); const data = exp.parse(o); const blob = new Blob([data], { type: 'text/plain' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = (o.name || 'scene') + '.obj'; link.click(); toast('Exported OBJ'); } else if (format === 'gltf') { const exp = new GLTFExporter(); exp.parse(o, (result) => { const data = JSON.stringify(result, null, 2); const blob = new Blob([data], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = (o.name || 'scene') + '.gltf'; link.click(); toast('Exported GLTF'); }); } else if (format === 'glb') { const exp = new GLTFExporter(); exp.parse(o, (result) => { const blob = new Blob([result], { type: 'application/octet-stream' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = (o.name || 'scene') + '.glb'; link.click(); toast('Exported GLB'); }, { binary: true }); } }
 
 const dragOverlay = document.getElementById('drag');
-window.addEventListener('dragover', (e) => {
-  if (e.target.closest('#props')) return;
-  e.preventDefault();
-  dragOverlay.classList.add('show');
-});
-window.addEventListener('dragleave', (e) => {
-  if (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) dragOverlay.classList.remove('show');
-});
-window.addEventListener('drop', (e) => {
-  if (e.target.closest('#props')) return; 
-  e.preventDefault();
-  dragOverlay.classList.remove('show');
-  if (e.dataTransfer.files.length > 0) handleFileDrop(e.dataTransfer.files[0]);
-});
+window.addEventListener('dragover', (e) => { if (e.target.closest('#props')) return; e.preventDefault(); dragOverlay.classList.add('show'); });
+window.addEventListener('dragleave', (e) => { if (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) dragOverlay.classList.remove('show'); });
+window.addEventListener('drop', (e) => { if (e.target.closest('#props')) return; e.preventDefault(); dragOverlay.classList.remove('show'); if (e.dataTransfer.files.length > 0) handleFileDrop(e.dataTransfer.files[0]); });
 
-function openRenderModal() {
-  const cams = [];
-  const findCams = (arr) => {
-    arr.forEach(o => {
-      if (o.isCamera) cams.push(o);
-      if (o.isGroup) findCams(o.children);
-    });
-  };
-  findCams(S.objs);
-  
-  if (cams.length === 0) { toast('No camera in scene! Add a Camera via Shift+A -> Camera'); return; }
-  const sel = document.getElementById('cam-sel');
-  sel.innerHTML = '';
-  cams.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.uuid;
-    opt.textContent = c.name;
-    sel.appendChild(opt);
-  });
-  document.getElementById('r-modal').classList.add('show');
-}
-
+function openRenderModal() { const cams = []; const findCams = (arr) => { arr.forEach(o => { if (o.isCamera) cams.push(o); if (o.isGroup) findCams(o.children); }); }; findCams(S.objs); if (cams.length === 0) { toast('No camera in scene! Add a Camera via Shift+A -> Camera'); return; } const sel = document.getElementById('cam-sel'); sel.innerHTML = ''; cams.forEach(c => { const opt = document.createElement('option'); opt.value = c.uuid; opt.textContent = c.name; sel.appendChild(opt); }); document.getElementById('r-modal').classList.add('show'); }
 document.getElementById('r-cancel').addEventListener('click', () => document.getElementById('r-modal').classList.remove('show'));
-
-document.getElementById('r-confirm').addEventListener('click', () => {
-  const sel = document.getElementById('cam-sel');
-  const uuid = sel.value;
-  let cam = null;
-  const findCam = (arr) => {
-    arr.forEach(o => {
-      if (o.uuid === uuid) cam = o;
-      if (o.isGroup) findCam(o.children);
-    });
-  };
-  findCam(S.objs);
-  if (!cam) return;
-  executeRender(cam);
-  document.getElementById('r-modal').classList.remove('show');
-});
+document.getElementById('r-confirm').addEventListener('click', () => { const sel = document.getElementById('cam-sel'); const uuid = sel.value; let cam = null; const findCam = (arr) => { arr.forEach(o => { if (o.uuid === uuid) cam = o; if (o.isGroup) findCam(o.children); }); }; findCam(S.objs); if (!cam) return; executeRender(cam); document.getElementById('r-modal').classList.remove('show'); });
 
 function executeRender(rc) {
   toast('Rendering Image...');
@@ -1880,184 +847,197 @@ function executeRender(rc) {
   renderer.setSize(1920, 1080, false);
   rc.aspect = 1920 / 1080;
   rc.updateProjectionMatrix();
-  
-  gridGroup.visible = false;
-  transform.detach();
-  S.ghostMeshes.forEach(g => g.visible = false);
-  S.objs.forEach(o => {
-    if (o.isGroup) {
-      o.traverse(ch => {
-        if (ch.userData.helper) ch.userData.helper.visible = false;
-        const out = ch.getObjectByName('__outline__');
-        if (out) out.visible = false;
-      });
-    } else {
-      if (o.userData.helper) o.userData.helper.visible = false;
-      const out = o.getObjectByName('__outline__');
-      if (out) out.visible = false;
-    }
-  });
-  
-  if (S.poseMode) {
-    const helper = scene.getObjectByName('__skeleton_helper__');
-    if (helper) helper.visible = false;
-    S.boneHelpers.forEach(h => h.visible = false);
-  }
-
+  gridGroup.visible = false; transform.detach(); S.ghostMeshes.forEach(g => g.visible = false);
+  S.objs.forEach(o => { if (o.isGroup) { o.traverse(ch => { if (ch.userData.helper) ch.userData.helper.visible = false; const out = ch.getObjectByName('__outline__'); if (out) out.visible = false; }); } else { if (o.userData.helper) o.userData.helper.visible = false; const out = o.getObjectByName('__outline__'); if (out) out.visible = false; } });
+  if (S.poseMode) { const helper = scene.getObjectByName('__skeleton_helper__'); if (helper) helper.visible = false; S.boneHelpers.forEach(h => h.visible = false); }
   renderer.render(scene, rc);
-  
   const dataURL = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.download = 'blender_render.png';
-  link.href = dataURL;
-  link.click();
-  
+  const link = document.createElement('a'); link.download = 'blender_render.png'; link.href = dataURL; link.click();
   renderer.setSize(oldSize.x, oldSize.y, false);
-  camera.aspect = vp.clientWidth / vp.clientHeight;
-  camera.updateProjectionMatrix();
-  
-  gridGroup.visible = true;
-  S.ghostMeshes.forEach(g => g.visible = true);
-  S.objs.forEach(o => {
-    if (o.isGroup) {
-      o.traverse(ch => {
-        if (ch.userData.helper) ch.userData.helper.visible = true;
-        const out = ch.getObjectByName('__outline__');
-        if (out) out.visible = true;
-      });
-    } else {
-      if (o.userData.helper) o.userData.helper.visible = true;
-      const out = o.getObjectByName('__outline__');
-      if (out) out.visible = true;
-    }
-  });
-  
-  if (S.poseMode) {
-    const helper = scene.getObjectByName('__skeleton_helper__');
-    if (helper) helper.visible = true;
-    S.boneHelpers.forEach(h => h.visible = true);
-  }
-  
-  if (S.actObj) {
-    if (S.poseMode && S.actBone) transform.attach(S.actBone);
-    else if (!S.editMode && S.tool !== 'paint') transform.attach(S.actObj);
-  }
+  camera.aspect = vp.clientWidth / vp.clientHeight; camera.updateProjectionMatrix();
+  gridGroup.visible = true; S.ghostMeshes.forEach(g => g.visible = true);
+  S.objs.forEach(o => { if (o.isGroup) { o.traverse(ch => { if (ch.userData.helper) ch.userData.helper.visible = true; const out = ch.getObjectByName('__outline__'); if (out) out.visible = true; }); } else { if (o.userData.helper) o.userData.helper.visible = true; const out = o.getObjectByName('__outline__'); if (out) out.visible = true; } });
+  if (S.poseMode) { const helper = scene.getObjectByName('__skeleton_helper__'); if (helper) helper.visible = true; S.boneHelpers.forEach(h => h.visible = true); }
+  if (S.actObj) { if (S.poseMode && S.actBone) transform.attach(S.actBone); else if (!S.editMode && S.tool !== 'paint') transform.attach(S.actObj); }
   renderer.render(scene, camera);
   toast('Render Downloaded!');
 }
 
-// --- ANIMATION SYSTEM ---
 function insertKeyframe() {
-  const target = S.actBone || S.actObj;
-  if (!target) { toast('Select an object or bone first'); return; }
+  const targets = [];
   
-  const uuid = target.uuid;
-  if (!S.animData[uuid]) S.animData[uuid] = { pos: {t:[], v:[]}, rot: {t:[], v:[]}, scale: {t:[], v:[]} };
-  const data = S.animData[uuid];
-  const frame = S.currentFrame;
-
-  function addKf(track, time, vals) {
-    let idx = track.t.findIndex(t => Math.abs(t - time) < 0.5);
-    if (idx > -1) {
-      track.t.splice(idx, 1);
-      track.v.splice(idx * vals.length, vals.length);
-    }
-    track.t.push(time);
-    track.v.push(...vals);
-    let combined = track.t.map((t, i) => ({t, v: track.v.slice(i*vals.length, (i+1)*vals.length)}));
-    combined.sort((a, b) => a.t - b.t);
-    track.t = combined.map(s => s.t);
-    track.v = [].concat(...combined.map(s => s.v));
+  if (S.poseMode && S.skinnedMesh) {
+    // POSE MODE FIX: Automatically keyframe ALL bones in the skeleton
+    S.skinnedMesh.skeleton.bones.forEach(bone => targets.push(bone));
+  } else if (!S.poseMode) {
+    // OBJECT MODE: Keyframe all selected objects/groups
+    S.selObjs.forEach(o => targets.push(o));
   }
-
-  addKf(data.pos, frame, [target.position.x, target.position.y, target.position.z]);
-  addKf(data.rot, frame, [target.quaternion.x, target.quaternion.y, target.quaternion.z, target.quaternion.w]);
-  addKf(data.scale, frame, [target.scale.x, target.scale.y, target.scale.z]);
-
-  rebuildClip(target);
-  updateTimelineKeyframes();
+  
+  if (targets.length === 0) { toast('Select an object or bone first'); return; }
+  
+  const frame = S.currentFrame;
+  
+  targets.forEach(target => {
+    const uuid = target.uuid;
+    if (!S.animData[uuid]) S.animData[uuid] = { pos: {t:[], v:[]}, rot: {t:[], v:[]}, scale: {t:[], v:[]} };
+    const data = S.animData[uuid];
+    
+    function addKf(track, time, vals) { 
+      let idx = track.t.findIndex(t => Math.abs(t - time) < 0.5); 
+      if (idx > -1) { track.t.splice(idx, 1); track.v.splice(idx * vals.length, vals.length); } 
+      track.t.push(time); track.v.push(...vals); 
+      let combined = track.t.map((t, i) => ({t, v: track.v.slice(i*vals.length, (i+1)*vals.length)})); 
+      combined.sort((a, b) => a.t - b.t); 
+      track.t = combined.map(s => s.t); 
+      track.v = [].concat(...combined.map(s => s.v)); 
+    }
+    
+    addKf(data.pos, frame, [target.position.x, target.position.y, target.position.z]);
+    addKf(data.rot, frame, [target.quaternion.x, target.quaternion.y, target.quaternion.z, target.quaternion.w]);
+    addKf(data.scale, frame, [target.scale.x, target.scale.y, target.scale.z]);
+  });
+  
+  // Rebuild the unified clip for the whole model
+  rebuildClip(targets[0]);
+  
+  updateTimelineKeyframes(); 
   updateOnionSkin();
-  toast(`Keyframe inserted at frame ${Math.floor(frame)}`);
+  
+  // Custom reporting
+  if (S.poseMode) {
+    toast(`Pose keyframed for all ${targets.length} bones at frame ${Math.floor(frame)}`);
+  } else {
+    let groups = 0, meshes = 0, others = 0;
+    targets.forEach(t => {
+      if (t.isGroup) groups++;
+      else if (t.isMesh) meshes++;
+      else others++;
+    });
+    let parts = [];
+    if (meshes > 0) parts.push(`${meshes} Object${meshes>1?'s':''}`);
+    if (groups > 0) parts.push(`${groups} Group${groups>1?'s':''}`);
+    if (others > 0) parts.push(`${others} Other${others>1?'s':''}`);
+    toast(`Added ${parts.join(' and ')} to keyframe at frame ${Math.floor(frame)}`);
+  }
 }
 
 function rebuildClip(target) {
-  const data = S.animData[target.uuid];
-  const tracks = [];
+  let mixerRoot = S.actObj || target;
+  
+  // Find the true root of the model (usually the imported GLB Group)
+  if (target.isBone) {
+    let p = target;
+    while (p.parent && p.parent !== scene) {
+      p = p.parent;
+    }
+    mixerRoot = p;
+  } else if (target.isSkinnedMesh) {
+    mixerRoot = target.parent || target;
+  }
+
   const fps = S.fps;
+  let tracks = [];
+  let maxTime = 0;
 
-  const pTimes = data.pos.t.map(f => f / fps);
-  const rTimes = data.rot.t.map(f => f / fps);
-  const sTimes = data.scale.t.map(f => f / fps);
+  // 1. Gather Object Mode tracks (for the main model)
+  const rootData = S.animData[mixerRoot.uuid];
+  if (rootData) {
+    const pTimes = rootData.pos.t.map(f => f / fps);
+    const rTimes = rootData.rot.t.map(f => f / fps);
+    const sTimes = rootData.scale.t.map(f => f / fps);
+    if (pTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack('.position', pTimes, rootData.pos.v));
+    if (rTimes.length > 0) tracks.push(new THREE.QuaternionKeyframeTrack('.quaternion', rTimes, rootData.rot.v));
+    if (sTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack('.scale', sTimes, rootData.scale.v));
+    maxTime = Math.max(maxTime, ...rootData.pos.t, ...rootData.rot.t, ...rootData.scale.t, 0);
+  }
 
-  if (pTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack('.position', pTimes, data.pos.v));
-  if (rTimes.length > 0) tracks.push(new THREE.QuaternionKeyframeTrack('.quaternion', rTimes, data.rot.v));
-  if (sTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack('.scale', sTimes, data.scale.v));
+  // 2. Gather Bone tracks (for posing)
+  let skinnedMesh = mixerRoot.isSkinnedMesh ? mixerRoot : null;
+  if (!skinnedMesh && mixerRoot.traverse) {
+    mixerRoot.traverse(o => { if (o.isSkinnedMesh) skinnedMesh = o; });
+  }
+  
+  if (skinnedMesh && skinnedMesh.skeleton) {
+    skinnedMesh.skeleton.bones.forEach(bone => {
+      const data = S.animData[bone.uuid];
+      if (data) {
+        const pTimes = data.pos.t.map(f => f / fps);
+        const rTimes = data.rot.t.map(f => f / fps);
+        const sTimes = data.scale.t.map(f => f / fps);
+        
+        // Use bone.name so the mixer can find it inside the hierarchy
+        if (pTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack(bone.name + '.position', pTimes, data.pos.v));
+        if (rTimes.length > 0) tracks.push(new THREE.QuaternionKeyframeTrack(bone.name + '.quaternion', rTimes, data.rot.v));
+        if (sTimes.length > 0) tracks.push(new THREE.VectorKeyframeTrack(bone.name + '.scale', sTimes, data.scale.v));
+        
+        maxTime = Math.max(maxTime, ...data.pos.t, ...data.rot.t, ...data.scale.t, 0);
+      }
+    });
+  }
 
   if (tracks.length === 0) return;
 
-  const duration = Math.max(...data.pos.t, ...data.rot.t, ...data.scale.t, 1) / fps;
+  const duration = (maxTime || 1) / fps;
   const clip = new THREE.AnimationClip('custom', duration, tracks);
-
-  if (!target.userData.mixer) {
-    target.userData.mixer = new THREE.AnimationMixer(target);
-    S.mixers.push(target.userData.mixer);
+  
+  // Ensure a SINGLE mixer exists for the entire rigged model
+  if (!mixerRoot.userData.mixer) { 
+    mixerRoot.userData.mixer = new THREE.AnimationMixer(mixerRoot); 
+    S.mixers.push(mixerRoot.userData.mixer); 
   }
-
-  target.userData.mixer.stopAllAction();
-  const action = target.userData.mixer.clipAction(clip);
+  
+  // Stop any previous actions and play the new unified clip
+  mixerRoot.userData.mixer.stopAllAction();
+  const action = mixerRoot.userData.mixer.clipAction(clip);
   action.play();
-  target.userData.mixer.timeScale = S.isPlaying ? 1.0 : 0.0;
-  target.userData.mixer.setTime(S.currentFrame / fps);
+  mixerRoot.userData.mixer.setTime(S.currentFrame / fps);
 }
 
 function togglePlay() {
   S.isPlaying = !S.isPlaying;
   const playBtn = document.getElementById('play-btn');
-  
-  S.mixers.forEach(mixer => {
-    mixer.timeScale = S.isPlaying ? 1.0 : 0.0;
-  });
-
-  if (S.isPlaying) {
-    playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 H10 V20 H6 Z M14 4 H18 V20 H14 Z"/></svg>'; 
-  } else {
-    playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 L20 12 L6 20 Z"/></svg>'; 
-  }
+  S.mixers.forEach(mixer => { mixer.timeScale = S.isPlaying ? 1.0 : 0.0; });
+  if (S.isPlaying) { playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 H10 V20 H6 Z M14 4 H18 V20 H14 Z"></path></svg>'; } 
+  else { playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 L20 12 L6 20 Z"></path></svg>'; }
 }
 
 document.getElementById('play-btn').addEventListener('click', togglePlay);
 document.getElementById('key-btn').addEventListener('click', insertKeyframe);
 
 document.getElementById('stop-btn').addEventListener('click', () => {
-  S.isPlaying = false;
-  S.currentFrame = 0;
+  S.isPlaying = false; S.currentFrame = 0;
   document.getElementById('frame-input').value = 1;
   document.getElementById('tline-cursor').style.left = '0.4%';
-  S.mixers.forEach(mixer => {
-    mixer.setTime(0);
-    mixer.timeScale = 0.0;
-  });
-  document.getElementById('play-btn').innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 L20 12 L6 20 Z"/></svg>';
+  S.mixers.forEach(mixer => { mixer.setTime(0); mixer.timeScale = 0.0; });
+  document.getElementById('play-btn').innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4 L20 12 L6 20 Z"></path></svg>';
   updateOnionSkin();
 });
 
 const tlineTrack = document.getElementById('tline-track');
-tlineTrack.addEventListener('click', e => {
-  if (e.target.classList.contains('tline-kf')) return; 
-  
-  S.selectedKeyframe = null;
-  S.selectedKeyframeTarget = null;
-  updateTimelineKeyframes();
-  
+let isScrubbing = false;
+
+function updateScrub(e) {
   const rect = tlineTrack.getBoundingClientRect();
-  const percent = (e.clientX - rect.left) / rect.width;
+  const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   S.currentFrame = percent * S.totalFrames;
   document.getElementById('frame-input').value = Math.floor(S.currentFrame);
   document.getElementById('tline-cursor').style.left = `${percent * 100}%`;
-  
   S.mixers.forEach(m => m.setTime(S.currentFrame / S.fps));
-  updateOnionSkin();
+}
+
+tlineTrack.addEventListener('pointerdown', e => {
+  if (e.target.classList.contains('tline-kf')) return; 
+  isScrubbing = true;
+  S.selectedKeyframe = null; S.selectedKeyframeTarget = null;
+  updateTimelineKeyframes();
+  updateScrub(e);
+  document.addEventListener('pointermove', onScrubMove);
+  document.addEventListener('pointerup', onScrubUp);
 });
+
+function onScrubMove(e) { if (isScrubbing) updateScrub(e); }
+function onScrubUp(e) { if (isScrubbing) { isScrubbing = false; document.removeEventListener('pointermove', onScrubMove); document.removeEventListener('pointerup', onScrubUp); updateOnionSkin(); } }
 
 document.getElementById('frame-input').addEventListener('change', e => {
   S.currentFrame = parseInt(e.target.value) || 0;
@@ -2068,140 +1048,112 @@ document.getElementById('frame-input').addEventListener('change', e => {
   updateOnionSkin();
 });
 
+function findTargetByUuid(uuid) {
+  if (S.actBone && S.actBone.uuid === uuid) return S.actBone;
+  for (const o of S.objs) {
+    if (o.uuid === uuid) return o;
+    if (o.isGroup || o.isSkinnedMesh) {
+      let found = null;
+      o.traverse(c => { if (!found && c.uuid === uuid) found = c; });
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 function updateTimelineKeyframes() {
   const track = document.getElementById('tline-track');
   track.querySelectorAll('.tline-kf').forEach(el => el.remove());
   
-  const target = S.actBone || S.actObj;
-  if (!target || !S.animData[target.uuid]) return;
+  const activeTarget = S.actBone || S.actObj;
   
-  const data = S.animData[target.uuid];
-  const times = new Set([...data.pos.t, ...data.rot.t, ...data.scale.t]);
-  times.forEach(t => {
-    const percent = (t / S.totalFrames) * 100;
-    const kf = document.createElement('div');
-    kf.className = 'tline-kf';
-    kf.style.left = `${percent}%`;
-    kf.dataset.time = t;
+  Object.keys(S.animData).forEach(uuid => {
+    const data = S.animData[uuid];
+    if (!data) return;
+    const times = new Set([...data.pos.t, ...data.rot.t, ...data.scale.t]);
+    const isActive = activeTarget && activeTarget.uuid === uuid;
     
-    if (S.selectedKeyframe === t && S.selectedKeyframeTarget === target) {
-      kf.classList.add('selected');
-    }
-    
-    kf.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      S.selectedKeyframe = t;
-      S.selectedKeyframeTarget = target;
-      updateTimelineKeyframes(); 
+    times.forEach(t => {
+      const percent = (t / S.totalFrames) * 100;
+      const kf = document.createElement('div');
+      kf.className = 'tline-kf' + (isActive ? '' : ' other');
+      kf.style.left = `${percent}%`;
+      kf.dataset.time = t;
+      kf.dataset.uuid = uuid;
       
-      const rect = track.getBoundingClientRect();
+      if (S.selectedKeyframe === t && S.selectedKeyframeTarget && S.selectedKeyframeTarget.uuid === uuid) { 
+        kf.classList.add('selected'); 
+      }
       
-      const onMove = (ev) => {
-        const percent = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
-        const newTime = percent * S.totalFrames;
-        kf.style.left = `${percent * 100}%`;
-        kf.dataset.time = newTime; 
-      };
-      
-      const onUp = (ev) => {
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onUp);
-        
-        const percent = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
-        const oldTime = S.selectedKeyframe;
-        const newTime = percent * S.totalFrames;
-        
-        updateKeyframeTime(target, oldTime, newTime);
-        S.selectedKeyframe = newTime;
-        rebuildClip(target);
+      kf.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        const target = findTargetByUuid(uuid);
+        S.selectedKeyframe = t; 
+        S.selectedKeyframeTarget = target;
         updateTimelineKeyframes(); 
-        updateOnionSkin();
-      };
-      
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp);
+        const rect = track.getBoundingClientRect();
+        const onMove = (ev) => { 
+          const percent = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width)); 
+          const newTime = percent * S.totalFrames; 
+          kf.style.left = `${percent * 100}%`; 
+          kf.dataset.time = newTime; 
+        };
+        const onUp = (ev) => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          const percent = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+          const oldTime = S.selectedKeyframe; 
+          const newTime = percent * S.totalFrames;
+          if (target) {
+            updateKeyframeTime(target, oldTime, newTime);
+            S.selectedKeyframe = newTime;
+            rebuildClip(target); 
+          }
+          updateTimelineKeyframes(); 
+          updateOnionSkin();
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+      track.appendChild(kf);
     });
-    
-    track.appendChild(kf);
   });
 }
 
 function updateKeyframeTime(target, oldTime, newTime) {
   if (!target || !S.animData[target.uuid]) return;
   const data = S.animData[target.uuid];
-  
-  function moveTrack(track, size) {
-    const idx = track.t.findIndex(t => Math.abs(t - oldTime) < 0.5);
-    if (idx > -1) {
-      track.t[idx] = newTime;
-      let combined = track.t.map((t, i) => ({t, v: track.v.slice(i*size, (i+1)*size)}));
-      combined.sort((a, b) => a.t - b.t);
-      track.t = combined.map(s => s.t);
-      track.v = [].concat(...combined.map(s => s.v));
-    }
-  }
-  
-  moveTrack(data.pos, 3);
-  moveTrack(data.rot, 4);
-  moveTrack(data.scale, 3);
+  function moveTrack(track, size) { const idx = track.t.findIndex(t => Math.abs(t - oldTime) < 0.5); if (idx > -1) { track.t[idx] = newTime; let combined = track.t.map((t, i) => ({t, v: track.v.slice(i*size, (i+1)*size)})); combined.sort((a, b) => a.t - b.t); track.t = combined.map(s => s.t); track.v = [].concat(...combined.map(s => s.v)); } }
+  moveTrack(data.pos, 3); moveTrack(data.rot, 4); moveTrack(data.scale, 3);
 }
 
 function deleteSelectedKeyframe() {
   if (S.selectedKeyframe === null || !S.selectedKeyframeTarget) return;
-  const target = S.selectedKeyframeTarget;
-  const time = S.selectedKeyframe;
+  const target = S.selectedKeyframeTarget; const time = S.selectedKeyframe;
   if (!S.animData[target.uuid]) return;
   const data = S.animData[target.uuid];
-  
-  function removeTrack(track, size) {
-    const idx = track.t.findIndex(t => Math.abs(t - time) < 0.5);
-    if (idx > -1) {
-      track.t.splice(idx, 1);
-      track.v.splice(idx * size, size);
-    }
-  }
-  
-  removeTrack(data.pos, 3);
-  removeTrack(data.rot, 4);
-  removeTrack(data.scale, 3);
-  
-  S.selectedKeyframe = null;
-  S.selectedKeyframeTarget = null;
-  
-  rebuildClip(target);
-  updateTimelineKeyframes();
-  updateOnionSkin();
+  function removeTrack(track, size) { const idx = track.t.findIndex(t => Math.abs(t - time) < 0.5); if (idx > -1) { track.t.splice(idx, 1); track.v.splice(idx * size, size); } }
+  removeTrack(data.pos, 3); removeTrack(data.rot, 4); removeTrack(data.scale, 3);
+  S.selectedKeyframe = null; S.selectedKeyframeTarget = null;
+  rebuildClip(target); updateTimelineKeyframes(); updateOnionSkin();
   toast('Keyframe deleted');
 }
 
 function getInterpolatedState(uuid, frame) {
-  const data = S.animData[uuid];
-  if (!data) return null;
-
+  const data = S.animData[uuid]; if (!data) return null;
   const lerp = (a, b, t) => a + (b - a) * t;
-  
   function sample(track, frame, size) {
     if (track.t.length === 0) return null;
     if (frame <= track.t[0]) return track.v.slice(0, size);
     if (frame >= track.t[track.t.length-1]) return track.v.slice((track.t.length-1)*size, track.t.length*size);
-    
     let i0 = 0;
-    for (let i = 0; i < track.t.length; i++) {
-      if (track.t[i] <= frame) i0 = i;
-    }
-    let i1 = i0 + 1;
-    const t0 = track.t[i0];
-    const t1 = track.t[i1];
+    for (let i = 0; i < track.t.length; i++) { if (track.t[i] <= frame) i0 = i; }
+    let i1 = i0 + 1; const t0 = track.t[i0]; const t1 = track.t[i1];
     const alpha = (frame - t0) / (t1 - t0);
-    const v0 = track.v.slice(i0*size, (i0+1)*size);
-    const v1 = track.v.slice(i1*size, (i1+1)*size);
+    const v0 = track.v.slice(i0*size, (i0+1)*size); const v1 = track.v.slice(i1*size, (i1+1)*size);
     return v0.map((v, i) => v + (v1[i] - v) * alpha);
   }
-
-  const pos = sample(data.pos, frame, 3);
-  const rot = sample(data.rot, frame, 4);
-  const scale = sample(data.scale, frame, 3);
-  
+  const pos = sample(data.pos, frame, 3); const rot = sample(data.rot, frame, 4); const scale = sample(data.scale, frame, 3);
   if (!pos && !rot && !scale) return null;
   return { pos, rot, scale };
 }
@@ -2209,14 +1161,11 @@ function getInterpolatedState(uuid, frame) {
 function updateOnionSkin() {
   S.ghostMeshes.forEach(g => scene.remove(g));
   S.ghostMeshes = [];
-
   if (!S.settings.onionSkin || !S.actObj || !S.animData[S.actObj.uuid]) return;
-
   const count = S.settings.onionCount;
   for (let i = 1; i <= count; i++) {
     const pastState = getInterpolatedState(S.actObj.uuid, S.currentFrame - i);
     if (pastState) createGhost(S.actObj, pastState, 0x880000, 1 - (i / (count + 1)));
-    
     const futureState = getInterpolatedState(S.actObj.uuid, S.currentFrame + i);
     if (futureState) createGhost(S.actObj, futureState, 0x0088aa, 1 - (i / (count + 1)));
   }
@@ -2226,172 +1175,202 @@ function createGhost(target, state, color, opacity) {
   if (!target.isMesh) return;
   const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: opacity * 0.4, depthTest: true });
   const ghost = new THREE.Mesh(target.geometry, mat);
-  
-  if (state.pos) ghost.position.set(state.pos[0], state.pos[1], state.pos[2]);
-  else ghost.position.copy(target.position);
-  
-  if (state.rot) ghost.quaternion.set(state.rot[0], state.rot[1], state.rot[2], state.rot[3]);
-  else ghost.quaternion.copy(target.quaternion);
-  
-  if (state.scale) ghost.scale.set(state.scale[0], state.scale[1], state.scale[2]);
-  else ghost.scale.copy(target.scale);
-  
-  target.parent.add(ghost);
-  S.ghostMeshes.push(ghost);
+  if (state.pos) ghost.position.set(state.pos[0], state.pos[1], state.pos[2]); else ghost.position.copy(target.position);
+  if (state.rot) ghost.quaternion.set(state.rot[0], state.rot[1], state.rot[2], state.rot[3]); else ghost.quaternion.copy(target.quaternion);
+  if (state.scale) ghost.scale.set(state.scale[0], state.scale[1], state.scale[2]); else ghost.scale.copy(target.scale);
+  target.parent.add(ghost); S.ghostMeshes.push(ghost);
 }
+
+// --- ASSET STORAGE LOGIC ---
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('WebBlenderAssetsDB', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('assets')) {
+        db.createObjectStore('assets', { keyPath: 'name' });
+      }
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function saveAssetToStorage(file) {
+  const db = await openIDB();
+  const tx = db.transaction('assets', 'readwrite');
+  tx.objectStore('assets').put({ name: file.name, blob: file });
+  return new Promise(res => tx.oncomplete = res);
+}
+
+async function getStoredAssets() {
+  const db = await openIDB();
+  const tx = db.transaction('assets', 'readonly');
+  return new Promise(res => {
+    const req = tx.objectStore('assets').getAll();
+    req.onsuccess = () => res(req.result || []);
+  });
+}
+
+async function deleteStoredAsset(name) {
+  const db = await openIDB();
+  const tx = db.transaction('assets', 'readwrite');
+  tx.objectStore('assets').delete(name);
+  return new Promise(res => tx.oncomplete = res);
+}
+
+async function fetchBuiltinAssets() {
+  try {
+    const res = await fetch('https://api.github.com/repos/NotZeri/WebBlender3.x/contents/assets');
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data.filter(f => f.type === 'file').map(f => ({ name: f.name, url: f.download_url }));
+  } catch(e) { return []; }
+}
+
+async function openAssetsModal() {
+  document.getElementById('assets-modal').classList.add('show');
+  const builtinDiv = document.getElementById('builtin-assets');
+  const customDiv = document.getElementById('custom-assets');
+  builtinDiv.innerHTML = '<div style="color:#a1a1a1;">Loading built-in assets...</div>';
+  customDiv.innerHTML = '<div style="color:#a1a1a1;">Loading stored assets...</div>';
+
+  // Built-in Assets
+  const builtins = await fetchBuiltinAssets();
+  builtinDiv.innerHTML = '';
+  if (builtins.length === 0) {
+    builtinDiv.innerHTML = '<div style="color:#a1a1a1;">No built-in assets found or failed to load.</div>';
+  } else {
+    builtins.forEach(asset => {
+      const btn = document.createElement('button');
+      btn.className = 'asset-item';
+      btn.textContent = asset.name;
+      btn.title = "Add to scene";
+      btn.onclick = async () => {
+        btn.textContent = 'Downloading...';
+        try {
+          const res = await fetch(asset.url);
+          const blob = await res.blob();
+          const file = new File([blob], asset.name, { type: blob.type });
+          handleFileDrop(file);
+          document.getElementById('assets-modal').classList.remove('show');
+        } catch(e) { 
+          toast('Failed to download asset'); 
+          btn.textContent = asset.name; 
+        }
+      };
+      builtinDiv.appendChild(btn);
+    });
+  }
+
+  // Custom Stored Assets
+  const customs = await getStoredAssets();
+  customDiv.innerHTML = '';
+  if (customs.length === 0) {
+    customDiv.innerHTML = '<div style="color:#a1a1a1;">No stored assets yet. Use "Upload to Storage" above.</div>';
+  } else {
+    customs.forEach(asset => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.gap = '4px';
+      
+      const btn = document.createElement('button');
+      btn.className = 'asset-item';
+      btn.style.flex = '1';
+      btn.textContent = asset.name;
+      btn.title = "Add to scene";
+      btn.onclick = () => {
+        const file = new File([asset.blob], asset.name, { type: asset.blob.type });
+        handleFileDrop(file);
+        document.getElementById('assets-modal').classList.remove('show');
+      };
+      
+      const delBtn = document.createElement('button');
+      delBtn.className = 'asset-del';
+      delBtn.textContent = 'X';
+      delBtn.title = "Delete from storage";
+      delBtn.onclick = async () => {
+        await deleteStoredAsset(asset.name);
+        openAssetsModal(); // Refresh list
+      };
+      
+      row.appendChild(btn);
+      row.appendChild(delBtn);
+      customDiv.appendChild(row);
+    });
+  }
+}
+
+document.getElementById('upload-asset-btn').addEventListener('click', () => document.getElementById('upload-asset-input').click());
+document.getElementById('upload-asset-input').addEventListener('change', async e => {
+  if (e.target.files.length > 0) {
+    await saveAssetToStorage(e.target.files[0]);
+    e.target.value = ''; // Reset input
+    openAssetsModal(); // Refresh list
+  }
+});
+// --- END ASSET STORAGE LOGIC ---
 
 document.querySelectorAll('.m-item').forEach(item => {
   item.addEventListener('click', e => {
-    e.stopPropagation();
-    const r = item.getBoundingClientRect();
-    let items = [];
-    if (item.dataset.m === 'file') items = [
-      { label: 'New', action: () => { clearScene(); toast('New scene'); } },
-      { separator: true },
-      { label: 'Import OBJ', action: () => document.getElementById('file-obj').click() },
-      { label: 'Import GLTF/GLB', action: () => document.getElementById('file-gltf').click() },
-      { label: 'Import FBX', action: () => document.getElementById('file-fbx').click() },
-      { separator: true },
-      { label: 'Export OBJ', action: () => exportScene('obj') },
-      { label: 'Export GLTF', action: () => exportScene('gltf') },
-      { label: 'Export GLB', action: () => exportScene('glb') },
-      { separator: true },
-      { label: 'Quit', action: () => toast('Quit not available') },
-    ];
-    else if (item.dataset.m === 'edit') items = [
-      { label: 'Undo', action: undo, shortcut: 'Ctrl+Z' },
-      { label: 'Redo', action: redo, shortcut: 'Ctrl+X' },
-      { separator: true },
-      { label: 'Copy', action: copyObj, shortcut: 'Ctrl+C' },
-      { label: 'Paste', action: pasteObj, shortcut: 'Ctrl+V' },
-      { label: 'Group', action: groupSel, shortcut: 'Ctrl+G' },
-      { separator: true },
-      { label: 'Preferences', action: () => document.getElementById('set-modal').classList.add('show') },
-    ];
-    else if (item.dataset.m === 'render') items = [
-      { label: 'Render Image', action: openRenderModal, shortcut: 'F12' },
-    ];
-    else if (item.dataset.m === 'help') items = [
-      { label: 'Keyboard Shortcuts', action: () => document.getElementById('help').classList.add('show') },
-      { separator: true },
-      { label: 'About', action: () => toast('Blender 3.x Web Edition') },
-    ];
+    e.stopPropagation(); 
+    
+    if (item.dataset.m === 'assets') {
+      openAssetsModal();
+      return; // Skip showing popup menu
+    }
+
+    const r = item.getBoundingClientRect(); let items = [];
+    if (item.dataset.m === 'file') items = [ { label: 'New', action: () => { clearScene(); toast('New scene'); } }, { separator: true }, { label: 'Import OBJ', action: () => document.getElementById('file-obj').click() }, { label: 'Import GLTF/GLB', action: () => document.getElementById('file-gltf').click() }, { label: 'Import FBX', action: () => document.getElementById('file-fbx').click() }, { separator: true }, { label: 'Export OBJ', action: () => exportScene('obj') }, { label: 'Export GLTF', action: () => exportScene('gltf') }, { label: 'Export GLB', action: () => exportScene('glb') }, { separator: true }, { label: 'Quit', action: () => toast('Quit not available') }, ];
+    else if (item.dataset.m === 'edit') items = [ { label: 'Undo', action: undo, shortcut: 'Ctrl+Z' }, { label: 'Redo', action: redo, shortcut: 'Ctrl+X' }, { separator: true }, { label: 'Copy', action: copyObj, shortcut: 'Ctrl+C' }, { label: 'Paste', action: pasteObj, shortcut: 'Ctrl+V' }, { label: 'Group', action: groupSel, shortcut: 'Ctrl+G' }, { separator: true }, { label: 'Preferences', action: () => document.getElementById('set-modal').classList.add('show') }, ];
+    else if (item.dataset.m === 'render') items = [ { label: 'Render Image', action: openRenderModal, shortcut: 'F12' }, ];
+    else if (item.dataset.m === 'help') items = [ { label: 'Keyboard Shortcuts', action: () => document.getElementById('help').classList.add('show') }, { separator: true }, { label: 'About', action: () => toast('Blender 3.x Web Edition') }, ];
     showPopup(r.left, r.bottom, items);
   });
 });
 
 document.getElementById('set-offset').addEventListener('change', e => S.settings.pasteOffset = e.target.checked);
 document.getElementById('set-mirror').addEventListener('change', e => S.settings.mirrorPaint = e.target.checked);
-document.getElementById('set-onion').addEventListener('change', e => {
-  S.settings.onionSkin = e.target.checked;
-  updateOnionSkin();
-});
-document.getElementById('set-onion-count').addEventListener('input', e => {
-  S.settings.onionCount = parseInt(e.target.value) || 3;
-  updateOnionSkin();
-});
+document.getElementById('set-onion').addEventListener('change', e => { S.settings.onionSkin = e.target.checked; updateOnionSkin(); });
+document.getElementById('set-onion-count').addEventListener('input', e => { S.settings.onionCount = parseInt(e.target.value) || 3; updateOnionSkin(); });
 
 document.querySelectorAll('.vm').forEach(menu => {
   menu.addEventListener('click', e => {
-    e.stopPropagation();
-    const r = menu.getBoundingClientRect();
-    let items = [];
+    e.stopPropagation(); const r = menu.getBoundingClientRect(); let items = [];
     if (menu.dataset.vm === 'add') items = getAddItems();
-    else if (menu.dataset.vm === 'view') items = [
-      { label: 'Frame All', action: frameAll, shortcut: 'Home' },
-      { separator: true },
-      { label: 'Front', action: () => setView('front'), shortcut: 'Numpad 1' },
-      { label: 'Right', action: () => setView('right'), shortcut: 'Numpad 3' },
-      { label: 'Top', action: () => setView('top'), shortcut: 'Numpad 7' },
-    ];
-    else if (menu.dataset.vm === 'select') items = [
-      { label: 'Box Select', action: () => setTool('select') },
-      { label: 'Select All', action: () => { if (S.objs.length) selectObject(S.objs[0], false); } },
-      { label: 'Deselect All', action: () => selectObject(null, false) },
-    ];
+    else if (menu.dataset.vm === 'view') items = [ { label: 'Frame All', action: frameAll, shortcut: 'Home' }, { separator: true }, { label: 'Front', action: () => setView('front'), shortcut: 'Numpad 1' }, { label: 'Right', action: () => setView('right'), shortcut: 'Numpad 3' }, { label: 'Top', action: () => setView('top'), shortcut: 'Numpad 7' }, ];
+    else if (menu.dataset.vm === 'select') items = [ { label: 'Box Select', action: () => setTool('select') }, { label: 'Select All', action: () => { if (S.objs.length) selectObject(S.objs[0], false); } }, { label: 'Deselect All', action: () => selectObject(null, false) }, ];
     else if (menu.dataset.vm === 'object') items = getCtxItems();
     showPopup(r.left, r.bottom, items);
   });
 });
 
-document.querySelectorAll('.tbtn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const t = btn.dataset.t;
-    if (t === 'add-cube') addObj('Cube');
-    else setTool(t);
-  });
-});
-
+document.querySelectorAll('.tbtn').forEach(btn => { btn.addEventListener('click', () => { const t = btn.dataset.t; if (t === 'add-cube') addObj('Cube'); else setTool(t); }); });
 document.querySelectorAll('.sbtn').forEach(btn => btn.addEventListener('click', () => toggleShade(btn.dataset.shade)));
 document.querySelectorAll('.vmode').forEach(btn => btn.addEventListener('click', () => {
-  if (btn.dataset.mode === 'edit') {
-    if (S.poseMode) exitPoseMode();
-    if (S.editMode) editOff(); else editOn();
-  } else if (btn.dataset.mode === 'pose') {
-    if (S.editMode) editOff();
-    if (S.poseMode) exitPoseMode(); else enterPoseMode();
-  } else {
-    if (S.editMode) editOff();
-    if (S.poseMode) exitPoseMode();
-  }
+  if (btn.dataset.mode === 'edit') { if (S.poseMode) exitPoseMode(); if (S.editMode) editOff(); else editOn(); }
+  else if (btn.dataset.mode === 'pose') { if (S.editMode) editOff(); if (S.poseMode) exitPoseMode(); else enterPoseMode(); }
+  else { if (S.editMode) editOff(); if (S.poseMode) exitPoseMode(); }
 }));
-document.querySelectorAll('.ws-tab').forEach(tab => tab.addEventListener('click', () => {
-  document.querySelectorAll('.ws-tab').forEach(t => t.classList.remove('active'));
-  tab.classList.add('active');
-}));
+document.querySelectorAll('.ws-tab').forEach(tab => tab.addEventListener('click', () => { document.querySelectorAll('.ws-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); }));
 
-const fObj = document.createElement('input');
-fObj.type = 'file';
-fObj.accept = '.obj';
-fObj.id = 'file-obj';
-fObj.style.display = 'none';
-document.body.appendChild(fObj);
-fObj.addEventListener('change', e => { if(e.target.files.length>0) handleFileDrop(e.target.files[0]); });
-
-const fGltf = document.createElement('input');
-fGltf.type = 'file';
-fGltf.accept = '.gltf,.glb';
-fGltf.id = 'file-gltf';
-fGltf.style.display = 'none';
-document.body.appendChild(fGltf);
-fGltf.addEventListener('change', e => { if(e.target.files.length>0) handleFileDrop(e.target.files[0]); });
-
-const fFbx = document.createElement('input');
-fFbx.type = 'file';
-fFbx.accept = '.fbx';
-fFbx.id = 'file-fbx';
-fFbx.style.display = 'none';
-document.body.appendChild(fFbx);
-fFbx.addEventListener('change', e => { if(e.target.files.length>0) handleFileDrop(e.target.files[0]); });
+const fObj = document.createElement('input'); fObj.type = 'file'; fObj.accept = '.obj'; fObj.id = 'file-obj'; fObj.style.display = 'none'; document.body.appendChild(fObj); fObj.addEventListener('change', e => { if(e.target.files.length>0) handleFileDrop(e.target.files[0]); });
+const fGltf = document.createElement('input'); fGltf.type = 'file'; fGltf.accept = '.gltf,.glb'; fGltf.id = 'file-gltf'; fGltf.style.display = 'none'; document.body.appendChild(fGltf); fGltf.addEventListener('change', e => { if(e.target.files.length>0) handleFileDrop(e.target.files[0]); });
+const fFbx = document.createElement('input'); fFbx.type = 'file'; fFbx.accept = '.fbx'; fFbx.id = 'file-fbx'; fFbx.style.display = 'none'; document.body.appendChild(fFbx); fFbx.addEventListener('change', e => { if(e.target.files.length>0) handleFileDrop(e.target.files[0]); });
 
 function refreshTree() {
-  const tree = document.getElementById('tree');
-  tree.innerHTML = '';
+  const tree = document.getElementById('tree'); tree.innerHTML = '';
   tree.appendChild(mkTreeItem('Scene Collection', 'scene', true, false, 4));
   tree.appendChild(mkTreeItem('Collection', 'collection', true, false, 16));
-  
   function renderObjs(objs, pad) {
     objs.forEach(o => {
-      let type = 'mesh';
-      if (o.isCamera) type = 'camera';
-      if (o.isGroup) type = 'collection';
-      if (o.isLight) type = 'light';
-      let isSel = S.selObjs.includes(o);
-      let isExp = o.expanded !== undefined ? o.expanded : true;
+      let type = 'mesh'; if (o.isCamera) type = 'camera'; if (o.isGroup) type = 'collection'; if (o.isLight) type = 'light';
+      let isSel = S.selObjs.includes(o); let isExp = o.expanded !== undefined ? o.expanded : true;
       let item = mkTreeItem(o.name, type, o.isGroup ? isExp : null, isSel, pad);
-      if (o.isGroup) {
-        let tog = item.querySelector('.o-toggle');
-        if (tog) {
-          tog.style.cursor = 'pointer';
-          tog.addEventListener('click', (e) => { e.stopPropagation(); o.expanded = !isExp; refreshTree(); });
-        }
-      }
+      if (o.isGroup) { let tog = item.querySelector('.o-toggle'); if (tog) { tog.style.cursor = 'pointer'; tog.addEventListener('click', (e) => { e.stopPropagation(); o.expanded = !isExp; refreshTree(); }); } }
       item.addEventListener('click', (e) => { e.stopPropagation(); selectObject(o, e.shiftKey); });
-      item.addEventListener('contextmenu', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        selectObject(o, false);
-        showPopup(e.clientX, e.clientY, getTreeCtxItems(o));
-      });
+      item.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); selectObject(o, false); showPopup(e.clientX, e.clientY, getTreeCtxItems(o)); });
       tree.appendChild(item);
       if (o.isGroup && o.children.length > 0 && isExp) renderObjs(o.children, pad + 14);
     });
@@ -2401,137 +1380,74 @@ function refreshTree() {
 }
 
 function mkTreeItem(name, iconType, exp, act, pad) {
-  const d = document.createElement('div');
-  d.className = 'o-item' + (act ? ' active' : '');
-  d.style.paddingLeft = pad + 'px';
-  const tog = document.createElement('div');
-  tog.className = 'o-toggle';
-  tog.textContent = exp ? '▾' : '▸';
-  d.appendChild(tog);
-  const vis = document.createElement('div');
-  vis.className = 'o-vis';
-  vis.innerHTML = '<svg viewBox="0 0 14 14"><path d="M1 7 C3 3 5 2 7 2 C9 2 11 3 13 7 C11 11 9 12 7 12 C5 12 3 11 1 7 Z" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="7" cy="7" r="2" fill="currentColor"/></svg>';
-  d.appendChild(vis);
-  const icon = document.createElement('div');
-  icon.className = 'o-icon';
-  if (iconType === 'scene') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 4 L7 2 L12 4 L12 10 L7 12 L2 10 Z" stroke="currentColor" stroke-width="1" fill="none"/></svg>';
-  else if (iconType === 'collection') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 5 L7 3 L12 5 L12 9 L7 11 L2 9 Z" stroke="currentColor" stroke-width="1" fill="currentColor" fill-opacity:0.2/></svg>';
-  else if (iconType === 'camera') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M1 4 L9 4 L13 8 L13 10 L1 10 Z M9 7 L13 8" stroke="currentColor" stroke-width="1" fill="none"/><circle cx="4" cy="7" r="1.5" stroke="currentColor" stroke-width="1" fill="none"/></svg>';
-  else if (iconType === 'light') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M7 1 L9 5 L13 7 L9 9 L7 13 L5 9 L1 7 L5 5 Z" stroke="currentColor" stroke-width="1" fill="currentColor" fill-opacity:0.3/></svg>';
-  else icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 4 L7 2 L12 4 L12 10 L7 12 L2 10 Z M2 4 L7 6 L12 4 M7 6 L7 12" stroke="currentColor" stroke-width="1" fill="none"/></svg>';
+  const d = document.createElement('div'); d.className = 'o-item' + (act ? ' active' : ''); d.style.paddingLeft = pad + 'px';
+  const tog = document.createElement('div'); tog.className = 'o-toggle'; tog.textContent = exp ? '▾' : '▸'; d.appendChild(tog);
+  const vis = document.createElement('div'); vis.className = 'o-vis'; vis.innerHTML = '<svg viewBox="0 0 14 14"><path d="M1 7 C3 3 5 2 7 2 C9 2 11 3 13 7 C11 11 9 12 7 12 C5 12 3 11 1 7 Z" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="7" cy="7" r="2" fill="currentColor"/></svg>'; d.appendChild(vis);
+  const icon = document.createElement('div'); icon.className = 'o-icon';
+  if (iconType === 'scene') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 4 L7 2 L12 4 L12 10 L7 12 L2 10 Z" stroke="currentColor" stroke-width="1" fill="none"></path></svg>';
+  else if (iconType === 'collection') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 5 L7 3 L12 5 L12 9 L7 11 L2 9 Z" stroke="currentColor" stroke-width="1" fill="currentColor" fill-opacity:0.2></svg>';
+  else if (iconType === 'camera') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M1 4 L9 4 L13 8 L13 10 L1 10 Z M9 7 L13 8" stroke="currentColor" stroke-width="1" fill="none"></circle></path></svg>';
+  else if (iconType === 'light') icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M7 1 L9 5 L13 7 L9 9 L7 13 L5 9 L1 7 L5 5 Z" stroke="currentColor" stroke-width="1" fill="currentColor" fill-opacity:0.3></path></svg>';
+  else icon.innerHTML = '<svg viewBox="0 0 14 14"><path d="M2 4 L7 2 L12 4 L12 10 L7 12 L2 10 Z M2 4 L7 6 L12 4 M7 6 L7 12" stroke="currentColor" stroke-width="1" fill="none"></path></svg>';
   d.appendChild(icon);
-  const nd = document.createElement('div');
-  nd.className = 'o-name';
-  nd.textContent = name;
-  d.appendChild(nd);
+  const nd = document.createElement('div'); nd.className = 'o-name'; nd.textContent = name; d.appendChild(nd);
   return d;
 }
 
 function mkSec(title, exp = true) {
-  const sec = document.createElement('div');
-  sec.className = 'psec' + (exp ? '' : ' collapsed');
-  const head = document.createElement('div');
-  head.className = 'psec-head';
-  head.innerHTML = '<div class="psec-icon"></div>' + title;
-  head.addEventListener('click', () => sec.classList.toggle('collapsed'));
-  sec.appendChild(head);
-  const body = document.createElement('div');
-  body.className = 'psec-body';
-  sec.appendChild(body);
+  const sec = document.createElement('div'); sec.className = 'psec' + (exp ? '' : ' collapsed');
+  const head = document.createElement('div'); head.className = 'psec-head'; head.innerHTML = '<div class="psec-icon"></div>' + title;
+  head.addEventListener('click', () => sec.classList.toggle('collapsed')); sec.appendChild(head);
+  const body = document.createElement('div'); body.className = 'psec-body'; sec.appendChild(body);
   return sec;
 }
 
 function mkVec3(label, vec, onChange, dis = false, step = '0.001') {
-  const row = document.createElement('div');
-  row.className = 'prow';
-  row.innerHTML = `<div class="plabel">${label}</div>`;
-  const inputs = document.createElement('div');
-  inputs.className = 'v3input';
+  const row = document.createElement('div'); row.className = 'prow'; row.innerHTML = `<div class="plabel">${label}</div>`;
+  const inputs = document.createElement('div'); inputs.className = 'v3input';
   ['x','y','z'].forEach((axis, i) => {
-    const cell = document.createElement('div');
-    cell.className = 'vcell';
-    const ad = document.createElement('div');
-    ad.className = 'alabel ax-' + axis;
-    ad.textContent = axis.toUpperCase();
-    const inp = document.createElement('input');
-    inp.type = 'number';
-    inp.step = step;
-    inp.className = 'pinput';
-    inp.value = vec.getComponent(i).toFixed(3);
+    const cell = document.createElement('div'); cell.className = 'vcell';
+    const ad = document.createElement('div'); ad.className = 'alabel ax-' + axis; ad.textContent = axis.toUpperCase();
+    const inp = document.createElement('input'); inp.type = 'number'; inp.step = step; inp.className = 'pinput'; inp.value = vec.getComponent(i).toFixed(3);
     if (dis) inp.disabled = true;
-    inp.addEventListener('input', () => {
-      if (onChange) {
-        const v = vec.clone();
-        v.setComponent(i, parseFloat(inp.value) || 0);
-        onChange(v);
-      }
-    });
-    cell.appendChild(ad);
-    cell.appendChild(inp);
-    inputs.appendChild(cell);
+    inp.addEventListener('input', () => { if (onChange) { const v = vec.clone(); v.setComponent(i, parseFloat(inp.value) || 0); onChange(v); } });
+    cell.appendChild(ad); cell.appendChild(inp); inputs.appendChild(cell);
   });
-  row.appendChild(inputs);
-  return row;
+  row.appendChild(inputs); return row;
 }
 
 function refreshProps() {
-  const content = document.getElementById('props');
-  const tab = S.propTab;
-  content.innerHTML = '';
-  const sec = mkSec(tab.charAt(0).toUpperCase() + tab.slice(1));
-  const body = sec.querySelector('.psec-body');
+  const content = document.getElementById('props'); const tab = S.propTab; content.innerHTML = '';
+  const sec = mkSec(tab.charAt(0).toUpperCase() + tab.slice(1)); const body = sec.querySelector('.psec-body');
   
   if (tab === 'object' || tab === 'material') {
     if (S.selObjs.length > 1) {
-      if (tab === 'object') {
-        body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px; justify-content:center;">Multiple Objects Selected</div>';
-      } else {
+      if (tab === 'object') { body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px; justify-content:center;">Multiple Objects Selected</div>'; }
+      else {
         let hasMat = true;
-        S.selObjs.forEach(o => { 
-          if (o.isGroup) { o.traverse(c => { if (c.isMesh && !c.material) hasMat = false; }); }
-          else if (!o.material) hasMat = false; 
-        });
-        if (!hasMat) {
-          body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">No material</div>';
-        } else {
+        S.selObjs.forEach(o => { if (o.isGroup) { o.traverse(c => { if (c.isMesh && !c.material) hasMat = false; }); } else if (!o.material) hasMat = false; });
+        if (!hasMat) { body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">No material</div>'; }
+        else {
           body.innerHTML = `<div class="prow"><div class="plabel">Surface</div><select class="pinput" style="flex:1;"><option>Principled BSDF</option></select></div>`;
-          
-          const dz = document.createElement('div');
-          dz.className = 'drop-zone';
-          dz.innerHTML = 'Drag Image Here to Apply to All';
+          const dz = document.createElement('div'); dz.className = 'drop-zone'; dz.innerHTML = 'Drag Image Here to Apply to All';
           dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
           dz.addEventListener('dragleave', e => { dz.classList.remove('over'); });
-          dz.addEventListener('drop', e => {
-            e.preventDefault();
-            dz.classList.remove('over');
-            if (e.dataTransfer.files.length > 0) applyTextureFile(e.dataTransfer.files[0]);
-          });
+          dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if (e.dataTransfer.files.length > 0) applyTextureFile(e.dataTransfer.files[0]); });
           body.appendChild(dz);
-
-          const cr = document.createElement('div');
-          cr.className = 'prow';
-          cr.innerHTML = '<div class="plabel">Base Color</div>';
-          const sw = document.createElement('div');
-          sw.className = 'c-swatch';
-          const fo = S.selObjs[0];
-          const fm = fo.isGroup ? fo.children.find(c => c.isMesh)?.material : fo.material;
+          const cr = document.createElement('div'); cr.className = 'prow'; cr.innerHTML = '<div class="plabel">Base Color</div>';
+          const sw = document.createElement('div'); sw.className = 'c-swatch';
+          const fo = S.selObjs[0]; const fm = fo.isGroup ? fo.children.find(c => c.isMesh)?.material : fo.material;
           const actualMat = Array.isArray(fm) ? fm[0] : fm;
           if (actualMat) {
             sw.style.background = '#' + actualMat.color.getHexString();
-            const ci = document.createElement('input');
-            ci.type = 'color';
-            ci.value = '#' + actualMat.color.getHexString();
+            const ci = document.createElement('input'); ci.type = 'color'; ci.value = '#' + actualMat.color.getHexString();
             ci.addEventListener('input', () => {
-              S.selObjs.forEach(o => {
-                if (o.isGroup) o.traverse(c => { if (c.isMesh && c.material) { let m = Array.isArray(c.material)?c.material[0]:c.material; m.color.set(ci.value); } });
-                else if (o.material) { let m = Array.isArray(o.material)?o.material[0]:o.material; m.color.set(ci.value); }
-              });
+              S.selObjs.forEach(o => { if (o.isGroup) o.traverse(c => { if (c.isMesh && c.material) { let m = Array.isArray(c.material)?c.material[0]:c.material; m.color.set(ci.value); } }); else if (o.material) { let m = Array.isArray(o.material)?o.material[0]:o.material; m.color.set(ci.value); } });
               sw.style.background = ci.value;
             });
             sw.appendChild(ci);
           }
-          cr.appendChild(sw);
-          body.appendChild(cr);
+          cr.appendChild(sw); body.appendChild(cr);
         }
       }
     } else if (S.actObj) {
@@ -2542,37 +1458,17 @@ function refreshProps() {
           const rv = new THREE.Vector3(o.rotation.x * 180/Math.PI, o.rotation.y * 180/Math.PI, o.rotation.z * 180/Math.PI);
           body.appendChild(mkVec3('Rotation', rv, v => o.rotation.set(v.x * Math.PI/180, v.y * Math.PI/180, v.z * Math.PI/180), false, '0.1'));
           body.appendChild(mkVec3('Scale', o.scale, v => o.scale.set(Math.max(0.001, v.x), Math.max(0.001, v.y), Math.max(0.001, v.z)), false, '0.1'));
-          
           if (o.userData.animations && o.userData.animations.length > 0) {
-            const animSec = document.createElement('div');
-            animSec.className = 'psec';
-            animSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Animation</div>`;
-            const animBody = document.createElement('div');
-            animBody.className = 'psec-body';
-            
-            const animRow = document.createElement('div');
-            animRow.className = 'prow';
+            const animSec = document.createElement('div'); animSec.className = 'psec'; animSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Animation</div>`;
+            const animBody = document.createElement('div'); animBody.className = 'psec-body';
+            const animRow = document.createElement('div'); animRow.className = 'prow';
             let opts = o.userData.animations.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
             animRow.innerHTML = `<div class="plabel">Action</div><select class="pinput" style="flex:1;">${opts}</select>`;
             const sel = animRow.querySelector('select');
-            sel.addEventListener('change', e => {
-                const idx = parseInt(e.target.value);
-                const clip = o.userData.animations[idx];
-                const mixer = o.userData.mixer;
-                if (mixer && clip) {
-                    mixer.stopAllAction();
-                    const action = mixer.clipAction(clip);
-                    action.play();
-                    action.paused = !S.isPlaying;
-                }
-            });
-            animBody.appendChild(animRow);
-            animSec.appendChild(animBody);
-            body.appendChild(animSec);
+            sel.addEventListener('change', e => { const idx = parseInt(e.target.value); const clip = o.userData.animations[idx]; const mixer = o.userData.mixer; if (mixer && clip) { mixer.stopAllAction(); const action = mixer.clipAction(clip); action.play(); action.paused = !S.isPlaying; } });
+            animBody.appendChild(animRow); animSec.appendChild(animBody); body.appendChild(animSec);
           }
-        } else {
-          body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">Groups do not have materials. Select a child part (Alt+Click).</div>';
-        }
+        } else { body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">Groups do not have materials. Select a child part (Alt+Click).</div>'; }
       } else if (o.isCamera) {
         body.appendChild(mkVec3('Location', o.position, v => o.position.copy(v)));
         const rv = new THREE.Vector3(o.rotation.x * 180/Math.PI, o.rotation.y * 180/Math.PI, o.rotation.z * 180/Math.PI);
@@ -2581,446 +1477,158 @@ function refreshProps() {
         body.appendChild(mkVec3('Location', o.position, v => o.position.copy(v)));
         const rv = new THREE.Vector3(o.rotation.x * 180/Math.PI, o.rotation.y * 180/Math.PI, o.rotation.z * 180/Math.PI);
         body.appendChild(mkVec3('Rotation', rv, v => o.rotation.set(v.x * Math.PI/180, v.y * Math.PI/180, v.z * Math.PI/180), false, '0.1'));
-        
-        const er = document.createElement('div');
-        er.className = 'prow';
-        er.innerHTML = `<div class="plabel">Energy</div><input type="number" class="pinput" value="${o.intensity}" step="0.1">`;
-        er.querySelector('input').addEventListener('input', e => {
-            o.intensity = parseFloat(e.target.value) || 0;
-        });
+        const er = document.createElement('div'); er.className = 'prow'; er.innerHTML = `<div class="plabel">Energy</div><input type="number" class="pinput" value="${o.intensity}" step="0.1">`;
+        er.querySelector('input').addEventListener('input', e => { o.intensity = parseFloat(e.target.value) || 0; });
         body.appendChild(er);
-        
-        const cr = document.createElement('div');
-        cr.className = 'prow';
-        cr.innerHTML = '<div class="plabel">Color</div>';
-        const sw = document.createElement('div');
-        sw.className = 'c-swatch';
-        sw.style.background = '#' + o.color.getHexString();
-        const ci = document.createElement('input');
-        ci.type = 'color';
-        ci.value = '#' + o.color.getHexString();
-        ci.addEventListener('input', () => { 
-            o.color.set(ci.value); 
-            sw.style.background = ci.value; 
-            if (o.userData.helper) o.userData.helper.update(); 
-        });
-        sw.appendChild(ci);
-        cr.appendChild(sw);
-        body.appendChild(cr);
+        const cr = document.createElement('div'); cr.className = 'prow'; cr.innerHTML = '<div class="plabel">Color</div>';
+        const sw = document.createElement('div'); sw.className = 'c-swatch'; sw.style.background = '#' + o.color.getHexString();
+        const ci = document.createElement('input'); ci.type = 'color'; ci.value = '#' + o.color.getHexString();
+        ci.addEventListener('input', () => { o.color.set(ci.value); sw.style.background = ci.value; if (o.userData.helper) o.userData.helper.update(); });
+        sw.appendChild(ci); cr.appendChild(sw); body.appendChild(cr);
       } else if (tab === 'object') {
         body.appendChild(mkVec3('Location', o.position, v => o.position.copy(v)));
         const rv = new THREE.Vector3(o.rotation.x * 180/Math.PI, o.rotation.y * 180/Math.PI, o.rotation.z * 180/Math.PI);
         body.appendChild(mkVec3('Rotation', rv, v => o.rotation.set(v.x * Math.PI/180, v.y * Math.PI/180, v.z * Math.PI/180), false, '0.1'));
         body.appendChild(mkVec3('Scale', o.scale, v => o.scale.set(Math.max(0.001, v.x), Math.max(0.001, v.y), Math.max(0.001, v.z)), false, '0.1'));
-        if (o.geometry) {
-          const bb = new THREE.Box3().setFromObject(o);
-          body.appendChild(mkVec3('Dimensions', bb.getSize(new THREE.Vector3()), null, true));
-        }
-        
+        if (o.geometry) { const bb = new THREE.Box3().setFromObject(o); body.appendChild(mkVec3('Dimensions', bb.getSize(new THREE.Vector3()), null, true)); }
         if (o.userData.animations && o.userData.animations.length > 0) {
-          const animSec = document.createElement('div');
-          animSec.className = 'psec';
-          animSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Animation</div>`;
-          const animBody = document.createElement('div');
-          animBody.className = 'psec-body';
-          
-          const animRow = document.createElement('div');
-          animRow.className = 'prow';
+          const animSec = document.createElement('div'); animSec.className = 'psec'; animSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Animation</div>`;
+          const animBody = document.createElement('div'); animBody.className = 'psec-body';
+          const animRow = document.createElement('div'); animRow.className = 'prow';
           let opts = o.userData.animations.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
           animRow.innerHTML = `<div class="plabel">Action</div><select class="pinput" style="flex:1;">${opts}</select>`;
           const sel = animRow.querySelector('select');
-          sel.addEventListener('change', e => {
-              const idx = parseInt(e.target.value);
-              const clip = o.userData.animations[idx];
-              const mixer = o.userData.mixer;
-              if (mixer && clip) {
-                  mixer.stopAllAction();
-                  const action = mixer.clipAction(clip);
-                  action.play();
-                  action.paused = !S.isPlaying;
-              }
-          });
-          animBody.appendChild(animRow);
-          animSec.appendChild(animBody);
-          body.appendChild(animSec);
+          sel.addEventListener('change', e => { const idx = parseInt(e.target.value); const clip = o.userData.animations[idx]; const mixer = o.userData.mixer; if (mixer && clip) { mixer.stopAllAction(); const action = mixer.clipAction(clip); action.play(); action.paused = !S.isPlaying; } });
+          animBody.appendChild(animRow); animSec.appendChild(animBody); body.appendChild(animSec);
         }
       } else {
         let m = Array.isArray(o.material) ? (o.material[S.actMatIndex] || o.material[0]) : o.material;
-        if (!m) {
-          body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">No material</div>';
-        } else {
+        if (!m) { body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">No material</div>'; }
+        else {
           body.innerHTML = `<div class="prow"><div class="plabel">Surface</div><select class="pinput" style="flex:1;"><option>Principled BSDF</option></select></div>`;
-          
-          const cr = document.createElement('div');
-          cr.className = 'prow';
-          cr.innerHTML = '<div class="plabel">Base Color</div>';
-          const sw = document.createElement('div');
-          sw.className = 'c-swatch';
-          sw.style.background = '#' + m.color.getHexString();
-          const ci = document.createElement('input');
-          ci.type = 'color';
-          ci.value = '#' + m.color.getHexString();
+          const cr = document.createElement('div'); cr.className = 'prow'; cr.innerHTML = '<div class="plabel">Base Color</div>';
+          const sw = document.createElement('div'); sw.className = 'c-swatch'; sw.style.background = '#' + m.color.getHexString();
+          const ci = document.createElement('input'); ci.type = 'color'; ci.value = '#' + m.color.getHexString();
           ci.addEventListener('input', () => { m.color.set(ci.value); sw.style.background = ci.value; });
-          sw.appendChild(ci);
-          cr.appendChild(sw);
-          body.appendChild(cr);
-          
-          const mr = document.createElement('div');
-          mr.className = 'prow';
-          mr.innerHTML = '<div class="plabel">Metallic</div>';
-          const ms = document.createElement('div');
-          ms.className = 'srow';
-          ms.innerHTML = `<input type="range" min="0" max="1" step="0.01" value="0"><span class="sval">0.000</span>`;
-          ms.querySelector('input').addEventListener('input', e => {
-            const v = parseFloat(e.target.value);
-            ms.querySelector('.sval').textContent = v.toFixed(3);
-            m.specular.setRGB(v, v, v);
-            m.shininess = (1 - v) * 30 + 5;
-          });
-          mr.appendChild(ms);
-          body.appendChild(mr);
-
-          const ps = document.createElement('div');
-          ps.className = 'psec';
-          ps.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Texture Paint</div>`;
-          const pb = document.createElement('div');
-          pb.className = 'psec-body';
-          const bcr = document.createElement('div');
-          bcr.className = 'prow';
-          bcr.innerHTML = '<div class="plabel">Brush Color</div>';
-          const bsw = document.createElement('div');
-          bsw.className = 'c-swatch';
-          bsw.style.background = S.paintColor;
-          const bci = document.createElement('input');
-          bci.type = 'color';
-          bci.value = S.paintColor;
-          bci.addEventListener('input', () => { 
-            S.paintColor = bci.value; 
-            bsw.style.background = S.paintColor; 
-          });
-          bsw.appendChild(bci);
-          bcr.appendChild(bsw);
-          pb.appendChild(bcr);
-
-          const bsr = document.createElement('div');
-          bsr.className = 'prow';
-          bsr.innerHTML = '<div class="plabel">Brush Size</div>';
-          const bsl = document.createElement('div');
-          bsl.className = 'srow';
-          bsl.innerHTML = `<input type="range" min="1" max="50" step="1" value="${S.brushSize}"><span class="sval">${S.brushSize}</span>`;
-          bsl.querySelector('input').addEventListener('input', e => {
-            S.brushSize = parseInt(e.target.value);
-            bsl.querySelector('.sval').textContent = S.brushSize;
-          });
-          bsr.appendChild(bsl);
-          pb.appendChild(bsr);
-          ps.appendChild(pb);
-          body.appendChild(ps);
-
-          const texSec = document.createElement('div');
-          texSec.className = 'psec';
-          texSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Textures</div>`;
-          const texBody = document.createElement('div');
-          texBody.className = 'psec-body';
-
-          const dz = document.createElement('div');
-          dz.className = 'drop-zone';
-          dz.innerHTML = 'Drag Image Here to Apply Texture';
+          sw.appendChild(ci); cr.appendChild(sw); body.appendChild(cr);
+          const mr = document.createElement('div'); mr.className = 'prow'; mr.innerHTML = '<div class="plabel">Metallic</div>';
+          const ms = document.createElement('div'); ms.className = 'srow'; ms.innerHTML = `<input type="range" min="0" max="1" step="0.01" value="0"><span class="sval">0.000</span>`;
+          ms.querySelector('input').addEventListener('input', e => { const v = parseFloat(e.target.value); ms.querySelector('.sval').textContent = v.toFixed(3); m.specular.setRGB(v, v, v); m.shininess = (1 - v) * 30 + 5; });
+          mr.appendChild(ms); body.appendChild(mr);
+          const ps = document.createElement('div'); ps.className = 'psec'; ps.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Texture Paint</div>`;
+          const pb = document.createElement('div'); pb.className = 'psec-body';
+          const bcr = document.createElement('div'); bcr.className = 'prow'; bcr.innerHTML = '<div class="plabel">Brush Color</div>';
+          const bsw = document.createElement('div'); bsw.className = 'c-swatch'; bsw.style.background = S.paintColor;
+          const bci = document.createElement('input'); bci.type = 'color'; bci.value = S.paintColor;
+          bci.addEventListener('input', () => { S.paintColor = bci.value; bsw.style.background = S.paintColor; });
+          bsw.appendChild(bci); bcr.appendChild(bsw); pb.appendChild(bcr);
+          const bsr = document.createElement('div'); bsr.className = 'prow'; bsr.innerHTML = '<div class="plabel">Brush Size</div>';
+          const bsl = document.createElement('div'); bsl.className = 'srow'; bsl.innerHTML = `<input type="range" min="1" max="50" step="1" value="${S.brushSize}"><span class="sval">${S.brushSize}</span>`;
+          bsl.querySelector('input').addEventListener('input', e => { S.brushSize = parseInt(e.target.value); bsl.querySelector('.sval').textContent = S.brushSize; });
+          bsr.appendChild(bsl); pb.appendChild(bsr); ps.appendChild(pb); body.appendChild(ps);
+          const texSec = document.createElement('div'); texSec.className = 'psec'; texSec.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>Textures</div>`;
+          const texBody = document.createElement('div'); texBody.className = 'psec-body';
+          const dz = document.createElement('div'); dz.className = 'drop-zone'; dz.innerHTML = 'Drag Image Here to Apply Texture';
           dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
           dz.addEventListener('dragleave', e => { dz.classList.remove('over'); });
-          dz.addEventListener('drop', e => {
-            e.preventDefault();
-            dz.classList.remove('over');
-            if (e.dataTransfer.files.length > 0) applyTextureFile(e.dataTransfer.files[0]);
-          });
+          dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if (e.dataTransfer.files.length > 0) applyTextureFile(e.dataTransfer.files[0]); });
           texBody.appendChild(dz);
-
-          const tsr = document.createElement('div');
-          tsr.className = 'prow';
-          tsr.innerHTML = '<div class="plabel">Tex Size</div>';
-          const tss = document.createElement('div');
-          tss.className = 'stepper';
+          const tsr = document.createElement('div'); tsr.className = 'prow'; tsr.innerHTML = '<div class="plabel">Tex Size</div>';
+          const tss = document.createElement('div'); tss.className = 'stepper';
           let initSize = (m.map && m.map.repeat) ? m.map.repeat.x : 1.0;
-          tss.innerHTML = `
-            <button class="step-btn" data-dir="-1">-</button>
-            <input type="number" class="step-inp" value="${initSize.toFixed(2)}" step="0.1" min="0.1">
-            <button class="step-btn" data-dir="1">+</button>
-          `;
+          tss.innerHTML = `<button class="step-btn" data-dir="-1">-</button><input type="number" class="step-inp" value="${initSize.toFixed(2)}" step="0.1" min="0.1"><button class="step-btn" data-dir="1">+</button>`;
           const tInp = tss.querySelector('.step-inp');
-          const applyTexSize = (val) => {
-            val = Math.max(0.01, parseFloat(val) || 1.0);
-            if (m.map) {
-              m.map.wrapS = m.map.wrapT = THREE.RepeatWrapping;
-              m.map.repeat.set(val, val);
-              m.map.needsUpdate = true;
-            }
-            tInp.value = val.toFixed(2);
-          };
+          const applyTexSize = (val) => { val = Math.max(0.01, parseFloat(val) || 1.0); if (m.map) { m.map.wrapS = m.map.wrapT = THREE.RepeatWrapping; m.map.repeat.set(val, val); m.map.needsUpdate = true; } tInp.value = val.toFixed(2); };
           tInp.addEventListener('change', e => applyTexSize(e.target.value));
-          tss.querySelectorAll('.step-btn').forEach(btn => {
-            btn.addEventListener('click', e => {
-              let val = parseFloat(tInp.value) || 1.0;
-              val += parseFloat(btn.dataset.dir) * 0.1;
-              applyTexSize(val);
-            });
-          });
-          tsr.appendChild(tss);
-          texBody.appendChild(tsr);
-
-          texSec.appendChild(texBody);
-          body.appendChild(texSec);
+          tss.querySelectorAll('.step-btn').forEach(btn => { btn.addEventListener('click', e => { let val = parseFloat(tInp.value) || 1.0; val += parseFloat(btn.dataset.dir) * 0.1; applyTexSize(val); }); });
+          tsr.appendChild(tss); texBody.appendChild(tsr); texSec.appendChild(texBody); body.appendChild(texSec);
         }
       }
-    } else {
-      body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">No active object</div>';
-    }
+    } else { body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">No active object</div>'; }
   } else if (tab === 'modifier') {
     if (S.selObjs.length === 1 && S.actObj) {
       const o = S.actObj;
-      if (!o.isMesh) {
-        body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">Modifiers only work on meshes</div>';
-      } else {
-        const ab = document.createElement('button');
-        ab.className = 'pbtn';
-        ab.textContent = 'Add Modifier';
-        ab.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const r = ab.getBoundingClientRect();
-          showPopup(r.left, r.bottom, [
-            { label: 'Extrude (Solidify)', action: () => addMod(o, 'solidify') },
-          ]);
-        });
-        const br = document.createElement('div');
-        br.className = 'prow';
-        br.appendChild(ab);
-        body.appendChild(br);
-        
+      if (!o.isMesh) { body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">Modifiers only work on meshes</div>'; }
+      else {
+        const ab = document.createElement('button'); ab.className = 'pbtn'; ab.textContent = 'Add Modifier';
+        ab.addEventListener('click', (e) => { e.stopPropagation(); const r = ab.getBoundingClientRect(); showPopup(r.left, r.bottom, [ { label: 'Extrude (Solidify)', action: () => addMod(o, 'solidify') }, ]); });
+        const br = document.createElement('div'); br.className = 'prow'; br.appendChild(ab); body.appendChild(br);
         if (o.userData.modifiers) {
           o.userData.modifiers.forEach((m, i) => {
-            const ms = document.createElement('div');
-            ms.className = 'psec';
-            ms.innerHTML = `
-              <div class="psec-head" style="font-size: 11px;">
-                <div class="psec-icon"></div>
-                ${m.type === 'solidify' ? 'Extrude' : 'Modifier'}
-                <button style="margin-left:auto; background:none; border:1px solid #555; color:#aaa; padding:0 4px; cursor:pointer; border-radius:2px;">X</button>
-              </div>
-            `;
-            const mb = document.createElement('div');
-            mb.className = 'psec-body';
-            const sr = document.createElement('div');
-            sr.className = 'prow';
-            sr.innerHTML = `
-              <div class="plabel">Thickness</div>
-              <div class="srow">
-                <input type="range" min="0.01" max="1" step="0.01" value="${m.param}">
-                <span class="sval">${m.param.toFixed(2)}</span>
-              </div>
-            `;
-            sr.querySelector('input').addEventListener('input', (ev) => {
-              m.param = parseFloat(ev.target.value);
-              sr.querySelector('.sval').textContent = m.param.toFixed(2);
-              runMods(o);
-            });
-            mb.appendChild(sr);
-            ms.appendChild(mb);
-            ms.querySelector('button').addEventListener('click', (ev) => {
-              ev.stopPropagation();
-              o.userData.modifiers.splice(i, 1);
-              runMods(o);
-              refreshProps();
-              saveHistory();
-            });
+            const ms = document.createElement('div'); ms.className = 'psec';
+            ms.innerHTML = `<div class="psec-head" style="font-size: 11px;"><div class="psec-icon"></div>${m.type === 'solidify' ? 'Extrude' : 'Modifier'}<button style="margin-left:auto; background:none; border:1px solid #555; color:#aaa; padding:0 4px; cursor:pointer; border-radius:2px;">X</button></div>`;
+            const mb = document.createElement('div'); mb.className = 'psec-body';
+            const sr = document.createElement('div'); sr.className = 'prow'; sr.innerHTML = `<div class="plabel">Thickness</div><div class="srow"><input type="range" min="0.01" max="1" step="0.01" value="${m.param}"><span class="sval">${m.param.toFixed(2)}</span></div>`;
+            sr.querySelector('input').addEventListener('input', (ev) => { m.param = parseFloat(ev.target.value); sr.querySelector('.sval').textContent = m.param.toFixed(2); runMods(o); });
+            mb.appendChild(sr); ms.appendChild(mb);
+            ms.querySelector('button').addEventListener('click', (ev) => { ev.stopPropagation(); o.userData.modifiers.splice(i, 1); runMods(o); refreshProps(); saveHistory(); });
             body.appendChild(ms);
           });
         }
       }
-    } else {
-      body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">Select a single mesh to add modifiers</div>';
-    }
-  } else if (tab === 'render') {
-    body.innerHTML = `<div class="prow"><div class="plabel">Engine</div><select class="pinput" style="flex:1;"><option>Eevee</option><option>Cycles</option></select></div>`;
-  } else if (tab === 'output') {
-    body.innerHTML = `<div class="prow"><div class="plabel">Resolution</div><input type="number" class="pinput" value="1920" style="width:45px;"> × <input type="number" class="pinput" value="1080" style="width:45px;"></div>`;
-  } else if (tab === 'scene') {
-    body.innerHTML = `<div class="prow"><div class="plabel">Camera</div><select class="pinput" style="flex:1;"><option>Camera</option></select></div>`;
-  } else if (tab === 'world') {
-    const cr = document.createElement('div');
-    cr.className = 'prow';
-    cr.innerHTML = '<div class="plabel">Color</div>';
-    const sw = document.createElement('div');
-    sw.className = 'c-swatch';
-    sw.style.background = S.worldColor;
-    const ci = document.createElement('input');
-    ci.type = 'color';
-    ci.value = S.worldColor;
-    ci.addEventListener('input', () => { 
-      S.worldColor = ci.value; 
-      scene.background = new THREE.Color(ci.value); 
-      sw.style.background = ci.value; 
-    });
-    sw.appendChild(ci);
-    cr.appendChild(sw);
-    body.appendChild(cr);
-  } else {
-    body.innerHTML = `<div class="prow" style="color:#a1a1a1; padding-left:14px;">Not implemented in demo</div>`;
-  }
+    } else { body.innerHTML = '<div class="prow" style="color:#a1a1a1; padding-left:14px;">Select a single mesh to add modifiers</div>'; }
+  } else if (tab === 'render') { body.innerHTML = `<div class="prow"><div class="plabel">Engine</div><select class="pinput" style="flex:1;"><option>Eevee</option><option>Cycles</option></select></div>`; }
+  else if (tab === 'output') { body.innerHTML = `<div class="prow"><div class="plabel">Resolution</div><input type="number" class="pinput" value="1920" style="width:45px;"> × <input type="number" class="pinput" value="1080" style="width:45px;"></div>`; }
+  else if (tab === 'scene') { body.innerHTML = `<div class="prow"><div class="plabel">Camera</div><select class="pinput" style="flex:1;"><option>Camera</option></select></div>`; }
+  else if (tab === 'world') {
+    const cr = document.createElement('div'); cr.className = 'prow'; cr.innerHTML = '<div class="plabel">Color</div>';
+    const sw = document.createElement('div'); sw.className = 'c-swatch'; sw.style.background = S.worldColor;
+    const ci = document.createElement('input'); ci.type = 'color'; ci.value = S.worldColor;
+    ci.addEventListener('input', () => { S.worldColor = ci.value; scene.background = new THREE.Color(ci.value); sw.style.background = ci.value; });
+    sw.appendChild(ci); cr.appendChild(sw); body.appendChild(cr);
+  } else { body.innerHTML = `<div class="prow" style="color:#a1a1a1; padding-left:14px;">Not implemented in demo</div>`; }
   content.appendChild(sec);
 }
 
-document.querySelectorAll('.ptab').forEach(tab => tab.addEventListener('click', () => {
-  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
-  tab.classList.add('active');
-  S.propTab = tab.dataset.tab;
-  refreshProps();
-}));
+document.querySelectorAll('.ptab').forEach(tab => tab.addEventListener('click', () => { document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); S.propTab = tab.dataset.tab; refreshProps(); }));
 
-function frameAll() {
-  if (S.objs.length === 0) return;
-  const box = new THREE.Box3();
-  S.objs.forEach(o => box.expandByObject(o));
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z, 1);
-  const dist = maxDim / (2 * Math.tan(Math.PI * camera.fov / 360)) * 1.8;
-  camera.position.copy(center).add(new THREE.Vector3(dist, -dist, dist * 0.7));
-  orbit.target.copy(center);
-  orbit.update();
-}
-
-function clearScene() {
-  S.objs.forEach(o => {
-    if (o.userData.helper) scene.remove(o.userData.helper);
-    scene.remove(o);
-  });
-  S.objs = []; S.nameCount = {};
-  S.mixers = [];
-  S.animData = {};
-  S.ghostMeshes = [];
-  transform.detach(); refreshTree(); refreshProps(); updateStats();
-  saveHistory();
-  updateTimelineKeyframes();
-  updateOnionSkin();
-}
-
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(window.__t);
-  window.__t = setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-function updateStats() {
-  let v = 0, f = 0;
-  const count = (o) => {
-    if (o.isMesh && o.geometry) {
-      if (o.geometry.attributes.position) v += o.geometry.attributes.position.count;
-      if (o.geometry.index) f += o.geometry.index.count / 3;
-      else if (o.geometry.attributes.position) f += o.geometry.attributes.position.count / 3;
-    } else if (o.isGroup) {
-      o.children.forEach(c => count(c));
-    }
-  };
-  S.objs.forEach(o => count(o));
-  document.getElementById('v-count').textContent = Math.floor(v) + ' verts';
-  document.getElementById('f-count').textContent = Math.floor(f) + ' faces';
-}
+function frameAll() { if (S.objs.length === 0) return; const box = new THREE.Box3(); S.objs.forEach(o => box.expandByObject(o)); const center = box.getCenter(new THREE.Vector3()); const size = box.getSize(new THREE.Vector3()); const maxDim = Math.max(size.x, size.y, size.z, 1); const dist = maxDim / (2 * Math.tan(Math.PI * camera.fov / 360)) * 1.8; camera.position.copy(center).add(new THREE.Vector3(dist, -dist, dist * 0.7)); orbit.target.copy(center); orbit.update(); }
+function clearScene() { S.objs.forEach(o => { if (o.userData.helper) scene.remove(o.userData.helper); scene.remove(o); }); S.objs = []; S.nameCount = {}; S.mixers = []; S.animData = {}; S.ghostMeshes = []; transform.detach(); refreshTree(); refreshProps(); updateStats(); saveHistory(); updateTimelineKeyframes(); updateOnionSkin(); }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(window.__t); window.__t = setTimeout(() => t.classList.remove('show'), 2000); }
+function updateStats() { let v = 0, f = 0; const count = (o) => { if (o.isMesh && o.geometry) { if (o.geometry.attributes.position) v += o.geometry.attributes.position.count; if (o.geometry.index) f += o.geometry.index.count / 3; else if (o.geometry.attributes.position) f += o.geometry.attributes.position.count / 3; } else if (o.isGroup) { o.children.forEach(c => count(c)); } }; S.objs.forEach(o => count(o)); document.getElementById('v-count').textContent = Math.floor(v) + ' verts'; document.getElementById('f-count').textContent = Math.floor(f) + ' faces'; }
 
 const gizmoCanvas = document.getElementById('gizmo-c');
 const gizmoRenderer = new THREE.WebGLRenderer({ canvas: gizmoCanvas, alpha: true });
-gizmoRenderer.setPixelRatio(window.devicePixelRatio);
-gizmoRenderer.setSize(70, 70);
-const gizmoScene = new THREE.Scene();
-const gizmoCamera = new THREE.OrthographicCamera(-1.6, 1.6, 1.6, -1.6, 0.1, 10);
-
-const gizmoMatX = new THREE.MeshBasicMaterial({ color: 0x803030 });
-const gizmoMatY = new THREE.MeshBasicMaterial({ color: 0x2a5a2a });
-const gizmoMatZ = new THREE.MeshBasicMaterial({ color: 0x305080 });
-const gizmoMatC = new THREE.MeshBasicMaterial({ color: 0x808080 });
-
-const coneX = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 8), gizmoMatX);
-coneX.position.x = 1.1; coneX.rotation.z = -Math.PI / 2; gizmoScene.add(coneX);
-const coneY = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 8), gizmoMatY);
-coneY.position.y = 1.1; gizmoScene.add(coneY);
-const coneZ = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 8), gizmoMatZ);
-coneZ.position.z = 1.1; coneZ.rotation.x = Math.PI / 2; gizmoScene.add(coneZ);
-
+gizmoRenderer.setPixelRatio(window.devicePixelRatio); gizmoRenderer.setSize(70, 70);
+const gizmoScene = new THREE.Scene(); const gizmoCamera = new THREE.OrthographicCamera(-1.6, 1.6, 1.6, -1.6, 0.1, 10);
+const gizmoMatX = new THREE.MeshBasicMaterial({ color: 0x803030 }); const gizmoMatY = new THREE.MeshBasicMaterial({ color: 0x2a5a2a }); const gizmoMatZ = new THREE.MeshBasicMaterial({ color: 0x305080 }); const gizmoMatC = new THREE.MeshBasicMaterial({ color: 0x808080 });
+const coneX = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 8), gizmoMatX); coneX.position.x = 1.1; coneX.rotation.z = -Math.PI / 2; gizmoScene.add(coneX);
+const coneY = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 8), gizmoMatY); coneY.position.y = 1.1; gizmoScene.add(coneY);
+const coneZ = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 8), gizmoMatZ); coneZ.position.z = 1.1; coneZ.rotation.x = Math.PI / 2; gizmoScene.add(coneZ);
 const lineX = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(1.1,0,0)]), new THREE.LineBasicMaterial({ color: 0x803030 }));
 const lineY = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,1.1,0)]), new THREE.LineBasicMaterial({ color: 0x2a5a2a }));
 const lineZ = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,1.1)]), new THREE.LineBasicMaterial({ color: 0x305080 }));
 gizmoScene.add(lineX, lineY, lineZ);
+const centerSphere = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 8), gizmoMatC); gizmoScene.add(centerSphere);
 
-const centerSphere = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 8), gizmoMatC);
-gizmoScene.add(centerSphere);
-
-function onResize() {
-  const w = vp.clientWidth;
-  const h = vp.clientHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
-}
+function onResize() { const w = vp.clientWidth; const h = vp.clientHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); }
 window.addEventListener('resize', onResize);
 
 let lastKfFrame = -1;
 function animate() {
-  requestAnimationFrame(animate);
-  const delta = clock.getDelta();
-  
+  requestAnimationFrame(animate); const delta = clock.getDelta();
   orbit.update();
-  
-  if (S.mixers.length > 0) {
-    S.mixers.forEach(mixer => {
-      if (S.isPlaying) {
-        mixer.update(delta);
-      } else {
-        mixer.update(0); 
-      }
-    });
-  }
-
+  if (S.mixers.length > 0) { S.mixers.forEach(mixer => { if (S.isPlaying) { mixer.update(delta); } else { mixer.update(0); } }); }
   if (S.isPlaying) {
     S.currentFrame += delta * S.fps;
     if (S.currentFrame > S.totalFrames) S.currentFrame = 0;
     document.getElementById('frame-input').value = Math.floor(S.currentFrame);
     document.getElementById('tline-cursor').style.left = `${(S.currentFrame / S.totalFrames) * 100}%`;
-    
-    if (Math.floor(S.currentFrame) !== lastKfFrame) {
-      lastKfFrame = Math.floor(S.currentFrame);
-      updateOnionSkin();
-    }
+    if (Math.floor(S.currentFrame) !== lastKfFrame) { lastKfFrame = Math.floor(S.currentFrame); updateOnionSkin(); }
   }
-  
-  if (S.poseMode && S.skinnedMesh) {
-    S.skinnedMesh.updateMatrixWorld(true);
-    S.boneHelpers.forEach(h => {
-      h.position.setFromMatrixPosition(h.userData.bone.matrixWorld);
-    });
-  }
-  
+  if (S.poseMode && S.skinnedMesh) { S.skinnedMesh.updateMatrixWorld(true); S.boneHelpers.forEach(h => { h.position.setFromMatrixPosition(h.userData.bone.matrixWorld); }); }
   renderer.render(scene, camera);
-  gizmoCamera.position.copy(camera.position).sub(orbit.target).normalize().multiplyScalar(-4);
-  gizmoCamera.up.copy(camera.up);
-  gizmoCamera.lookAt(0, 0, 0);
-  gizmoRenderer.render(gizmoScene, gizmoCamera);
+  gizmoCamera.position.copy(camera.position).sub(orbit.target).normalize().multiplyScalar(-4); gizmoCamera.up.copy(camera.up); gizmoCamera.lookAt(0, 0, 0); gizmoRenderer.render(gizmoScene, gizmoCamera);
 }
 
-addObj('Cube');
-selectObject(S.objs[0], false);
-frameAll();
-refreshProps();
-onResize();
-animate();
-saveHistory();
-
+addObj('Cube'); selectObject(S.objs[0], false); frameAll(); refreshProps(); onResize(); animate(); saveHistory();
 setTimeout(() => toast('Welcome to Blender Web! Drag & Drop .obj/.gltf/.fbx to import.'), 500);
 </script>
 
 <script>
     window.onload = async () => {
         if (typeof DiscordSDK !== 'undefined') {
-            const discordSdk = new DiscordSDK("1542418594527453224"); // Your Bot's Application ID
+            const discordSdk = new DiscordSDK("1542418594527453224");
             await discordSdk.ready();
             console.log("Discord Activity Loaded Successfully!");
         }
